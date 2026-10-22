@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+
+# Allow an example environment file
+!.env.example
+
+# Build files
+dist/
+build/
+
+# Logs
+npm-debug.log*
