@@ -203,7 +203,7 @@ taskSchema.pre("save", async function () {
   }
 });
 
-// POST-SAVE: persist the audit records after saving the task.
+// POST-SAVE: persist audit records after saving the task.
 taskSchema.post("save", async function () {
   const changes = this.$locals.auditChanges || [];
 
@@ -211,19 +211,22 @@ taskSchema.post("save", async function () {
     return;
   }
 
-  // Controllers will set auditUser to the authenticated user.
-  // The fallback keeps task creation auditable until controllers
-  // are updated to set the actor for every save.
-  const changedBy = this.$locals.auditUser || this.assignedBy;
+  const actorType =
+    this.$locals.auditActorType === "system" ? "system" : "user";
 
-  if (!changedBy) {
+  const changedBy =
+    this.$locals.auditUser ||
+    (actorType === "user" ? this.assignedBy : undefined);
+
+  if (actorType === "user" && !changedBy) {
     throw new Error("Cannot record task history: changedBy user is missing.");
   }
 
   await TaskHistory.create(
     changes.map((change) => ({
       task: this._id,
-      changedBy,
+      ...(changedBy ? { changedBy } : {}),
+      actorType,
       field: change.field,
       oldValue: change.oldValue,
       newValue: change.newValue,
@@ -233,6 +236,8 @@ taskSchema.post("save", async function () {
 
   delete this.$locals.auditChanges;
   delete this.$locals.auditWasNew;
+  delete this.$locals.auditUser;
+  delete this.$locals.auditActorType;
 });
 
 taskSchema.virtual("isOverdue").get(function () {

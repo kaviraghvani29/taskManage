@@ -11,7 +11,15 @@ const taskHistorySchema = new mongoose.Schema(
     changedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: function () {
+        return this.actorType !== "system";
+      },
+      immutable: true,
+    },
+    actorType: {
+      type: String,
+      enum: ["user", "system"],
+      default: "user",
       immutable: true,
     },
     field: {

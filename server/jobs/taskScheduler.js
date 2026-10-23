@@ -43,6 +43,7 @@ const startTaskScheduler = () => {
 
           if (task.priority !== "Critical") {
             task.priority = "Critical";
+            task.$locals.auditActorType = "system";
             await task.save();
           }
 
