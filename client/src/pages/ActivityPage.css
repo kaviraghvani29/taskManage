@@ -1,0 +1,271 @@
+.activity-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 27px;
+}
+
+.activity-eyebrow {
+  color: #6558e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.activity-intro h1 {
+  margin: 8px 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 31px;
+  letter-spacing: -1px;
+}
+
+.activity-intro p {
+  margin: 0;
+  color: #858ba0;
+  font-size: 12px;
+}
+
+.activity-total {
+  min-width: 130px;
+  padding: 15px 18px;
+  display: grid;
+  gap: 6px;
+  border: 1px solid #e9e7ff;
+  border-radius: 13px;
+  background: linear-gradient(135deg, white, #f4f2ff);
+}
+
+.activity-total span {
+  color: #858ba0;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.activity-total strong {
+  color: #6558e8;
+  font-family: "Manrope", sans-serif;
+  font-size: 27px;
+}
+
+.activity-error {
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border: 1px solid #ffd8db;
+  border-radius: 10px;
+  background: #fff2f3;
+  color: #b83246;
+  font-size: 12px;
+}
+
+.activity-panel {
+  overflow: hidden;
+  border: 1px solid #e8eaf2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 24px #28284b07;
+}
+
+.activity-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #eff0f6;
+}
+
+.activity-toolbar h2 {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 16px;
+}
+
+.activity-toolbar p {
+  margin: 6px 0 0;
+  color: #858ba0;
+  font-size: 11px;
+}
+
+.activity-toolbar select {
+  max-width: 320px;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid #e3e5ef;
+  border-radius: 9px;
+  background: #fbfbfe;
+  color: #4b5166;
+  font-size: 11px;
+}
+
+.activity-timeline {
+  padding: 10px 24px 25px;
+}
+
+.activity-entry {
+  display: flex;
+  gap: 15px;
+  padding: 22px 0;
+  border-bottom: 1px solid #f0f1f6;
+}
+
+.activity-entry:last-child {
+  border-bottom: 0;
+}
+
+.activity-marker {
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #efedff;
+  color: #6558e8;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.activity-entry-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-entry-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.activity-entry-top strong {
+  color: #30354b;
+  font-size: 12px;
+}
+
+.activity-entry-top time {
+  color: #969bae;
+  font-size: 10px;
+  text-align: right;
+}
+
+.activity-description {
+  margin: 8px 0 13px;
+  color: #777e94;
+  font-size: 11px;
+}
+
+.activity-description strong {
+  color: #4c5268;
+}
+
+.activity-change {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 25px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.activity-change > div:not(.activity-change-arrow) {
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid #eceef5;
+  border-radius: 9px;
+  background: #fafaff;
+}
+
+.activity-change span {
+  display: block;
+  margin-bottom: 6px;
+  color: #9297aa;
+  font-size: 9px;
+}
+
+.activity-change p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #454b61;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.activity-change-arrow {
+  color: #8a7df0;
+  text-align: center;
+}
+
+.activity-role {
+  display: inline-block;
+  margin-top: 11px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: #f0efff;
+  color: #6558e8;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.activity-empty {
+  display: grid;
+  justify-items: center;
+  padding: 50px 20px;
+  color: #858ba0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.activity-empty-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: #efedff;
+  color: #6558e8;
+  font-size: 22px;
+}
+
+.activity-empty h3 {
+  margin: 0;
+  color: #30354b;
+  font-size: 15px;
+}
+
+.activity-empty p {
+  margin: 8px 0 0;
+}
+
+@media (max-width: 650px) {
+  .activity-intro,
+  .activity-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .activity-toolbar select {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .activity-timeline {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .activity-entry-top {
+    flex-direction: column;
+  }
+
+  .activity-entry-top time {
+    text-align: left;
+  }
+
+  .activity-change {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .activity-change-arrow {
+    transform: rotate(90deg);
+  }
+}

@@ -1,0 +1,57 @@
+.workspace-placeholder {
+  min-height: 300px;
+  padding: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  border: 1px solid #e8eaf2;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 28px #28284b08;
+}
+
+.workspace-placeholder-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 24px;
+  border-radius: 15px;
+  background: #efedff;
+  color: #6558e8;
+  font-size: 24px;
+}
+
+.workspace-eyebrow {
+  color: #6558e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.workspace-placeholder h1 {
+  margin: 12px 0 8px;
+  font-size: 28px;
+}
+
+.workspace-placeholder p {
+  color: #858ba0;
+  font-size: 13px;
+}
+
+.workspace-status {
+  margin-top: 12px;
+  padding: 9px 13px;
+  border-radius: 8px;
+  background: #f0fbf5;
+  color: #25845b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .workspace-placeholder {
+    padding: 25px;
+  }
+}

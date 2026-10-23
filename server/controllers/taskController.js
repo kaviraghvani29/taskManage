@@ -4,7 +4,7 @@ import User from "../models/User.js";
 import TaskHistory from "../models/TaskHistory.js";
 import Notification from "../models/Notification.js";
 
-const unblockDependentTasks = async (completedTaskId) => {
+const unblockDependentTasks = async (completedTaskId, changedBy) => {
   const blockedTasks = await Task.find({
     status: "Blocked",
     dependsOn: completedTaskId,
@@ -20,17 +20,13 @@ const unblockDependentTasks = async (completedTaskId) => {
     );
 
     if (allCompleted) {
-      const oldStatus = task.status;
       task.status = "Assigned";
-      await task.save();
 
-      await TaskHistory.create({
-        task: task._id,
-        changedBy: task.assignedBy,
-        field: "status",
-        oldValue: oldStatus,
-        newValue: task.status,
-      });
+      // Record who triggered this automatic transition.
+      task.$locals.auditUser = changedBy || task.assignedBy;
+
+      // Task.js middleware records the status change.
+      await task.save();
 
       if (task.assignedTo) {
         await Notification.create({
@@ -92,10 +88,12 @@ export const createTask = async (req, res) => {
         return res.status(404).json({ message: "Project not found" });
       }
 
+      const userId = String(req.user._id);
+
       const canAccessProject =
         req.user.role === "Admin" ||
-        projectDoc.createdBy.equals(req.user._id) ||
-        projectDoc.teamMembers.some((id) => id.equals(req.user._id));
+        String(projectDoc.createdBy) === userId ||
+        projectDoc.teamMembers.some((member) => String(member) === userId);
 
       if (!canAccessProject) {
         return res.status(403).json({
@@ -118,8 +116,8 @@ export const createTask = async (req, res) => {
     }
 
     if (projectDoc) {
-      const isMember = projectDoc.teamMembers.some((id) =>
-        id.equals(targetUser._id),
+      const isMember = projectDoc.teamMembers.some(
+        (member) => String(member) === String(targetUser._id),
       );
 
       if (!isMember) {
@@ -175,7 +173,7 @@ export const createTask = async (req, res) => {
           ? "Blocked"
           : "Assigned";
 
-    const task = await Task.create({
+    const task = new Task({
       title: title.trim(),
       description,
       project: project || null,
@@ -190,13 +188,11 @@ export const createTask = async (req, res) => {
       approvalStatus: assigningPeer ? "Pending" : "None",
     });
 
-    await TaskHistory.create({
-      task: task._id,
-      changedBy: req.user._id,
-      field: "created",
-      oldValue: null,
-      newValue: { title: task.title, status: task.status },
-    });
+    // Tell the automatic Task middleware who performed this action.
+    task.$locals.auditUser = req.user._id;
+
+    // The Task model's save middleware records creation history.
+    await task.save();
 
     if (!targetUser._id.equals(req.user._id)) {
       await Notification.create({
@@ -207,10 +203,15 @@ export const createTask = async (req, res) => {
       });
     }
 
-    return res.status(201).json({ success: true, task });
+    return res.status(201).json({
+      success: true,
+      task,
+    });
   } catch (error) {
     console.error("Create task error:", error.message);
-    return res.status(500).json({ message: "Failed to create task" });
+    return res.status(500).json({
+      message: "Failed to create task",
+    });
   }
 };
 
@@ -259,13 +260,43 @@ export const getTasks = async (req, res) => {
 
     const filter = conditions.length ? { $and: conditions } : {};
 
-    const tasks = await Task.find(filter)
+    const paginate =
+      req.query.page !== undefined || req.query.limit !== undefined;
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.limit, 10) || 10),
+    );
+
+    let query = Task.find(filter)
       .populate("assignedTo", "name email role")
       .populate("assignedBy", "name email role")
       .populate("project", "name")
       .sort({ dueDate: 1, createdAt: -1 });
 
-    return res.json({ success: true, count: tasks.length, tasks });
+    if (paginate) {
+      query = query.skip((page - 1) * limit).limit(limit);
+    }
+
+    const [tasks, total] = await Promise.all([
+      query,
+      Task.countDocuments(filter),
+    ]);
+
+    return res.json({
+      success: true,
+      count: total,
+      tasks,
+      ...(paginate && {
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      }),
+    });
   } catch (error) {
     console.error("Get tasks error:", error.message);
     return res.status(500).json({ message: "Failed to fetch tasks" });
@@ -284,6 +315,7 @@ export const updateTask = async (req, res) => {
     const isManager = req.user.role === "Manager";
     const isEmployee = req.user.role === "Employee";
 
+    // Employee can access a task they are assigned to or created.
     if (
       isEmployee &&
       !task.assignedTo?.equals(req.user._id) &&
@@ -292,6 +324,7 @@ export const updateTask = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    // Manager must manage the task's project.
     if (isManager) {
       const projectDoc = task.project
         ? await Project.findById(task.project)
@@ -308,6 +341,7 @@ export const updateTask = async (req, res) => {
     }
 
     const oldStatus = task.status;
+
     const allowedFields = [
       "title",
       "description",
@@ -326,31 +360,35 @@ export const updateTask = async (req, res) => {
     }
 
     if (req.body.status !== undefined) {
+      const requestedStatus = req.body.status;
+
       if (isEmployee) {
-        if (["Closed", "Pending Review"].includes(req.body.status)) {
+        if (["Closed", "Pending Review"].includes(requestedStatus)) {
           return res.status(403).json({
             message: "Only a manager or admin can review tasks",
           });
         }
 
-        if (req.body.status === "Completed") {
+        if (requestedStatus === "Completed") {
+          // Employee completion requires Manager/Admin review.
           task.status = "Pending Review";
           task.approvalStatus = "Pending";
           task.progress = 100;
         } else if (
-          ["In Progress", "Blocked", "Open"].includes(req.body.status)
+          ["In Progress", "Blocked", "Open"].includes(requestedStatus)
         ) {
-          task.status = req.body.status;
+          task.status = requestedStatus;
         } else {
           return res.status(400).json({
             message: "Invalid status transition",
           });
         }
       } else {
-        task.status = req.body.status;
+        task.status = requestedStatus;
       }
     }
 
+    // Dependencies must be completed before work can start.
     if (task.status === "In Progress" && task.dependsOn.length) {
       const dependencies = await Task.find({
         _id: { $in: task.dependsOn },
@@ -367,37 +405,29 @@ export const updateTask = async (req, res) => {
       }
     }
 
+    // Tell the Task model which authenticated user made this change.
+    task.$locals.auditUser = req.user._id;
+
+    // Task.js middleware records all changed fields automatically.
     await task.save();
 
-    const changes = [];
-
-    if (oldStatus !== task.status) {
-      changes.push({
+    // Keep the existing status-change notification.
+    if (oldStatus !== task.status && task.assignedTo) {
+      await Notification.create({
+        user: task.assignedTo,
         task: task._id,
-        changedBy: req.user._id,
-        field: "status",
-        oldValue: oldStatus,
-        newValue: task.status,
+        message: `Task "${task.title}" status changed to ${task.status}`,
+        type: "Status",
       });
-
-      if (task.assignedTo) {
-        await Notification.create({
-          user: task.assignedTo,
-          task: task._id,
-          message: `Task "${task.title}" status changed to ${task.status}`,
-          type: "Status",
-        });
-      }
     }
 
-    if (changes.length) {
-      await TaskHistory.insertMany(changes);
-    }
-
-    res.json({ success: true, task });
+    return res.json({ success: true, task });
   } catch (error) {
     console.error("Update task error:", error.message);
-    res.status(500).json({ message: "Failed to update task" });
+
+    return res.status(500).json({
+      message: "Failed to update task",
+    });
   }
 };
 
@@ -447,38 +477,38 @@ export const reviewTask = async (req, res) => {
       }
     }
 
-    const oldStatus = task.status;
-
     task.status = action === "approve" ? "Closed" : "In Progress";
     task.approvalStatus = action === "approve" ? "Approved" : "Rejected";
     task.rejectionReason = action === "reopen" ? reason.trim() : "";
 
-    await task.save();
-    if (action === "approve") {
-      await unblockDependentTasks(task._id);
-    }
+    // Record the authenticated user for automatic audit history.
+    task.$locals.auditUser = req.user._id;
 
-    await TaskHistory.create({
-      task: task._id,
-      changedBy: req.user._id,
-      field: "status",
-      oldValue: oldStatus,
-      newValue: task.status,
-    });
+    // Task.js middleware records all changed fields automatically.
+    await task.save();
+
+    if (action === "approve") {
+      await unblockDependentTasks(task._id, req.user._id);
+    }
 
     if (task.assignedTo) {
       await Notification.create({
         user: task.assignedTo,
         task: task._id,
-        message: `Task "${task.title}" was ${action === "approve" ? "approved" : "reopened"}`,
+        message: `Task "${task.title}" was ${
+          action === "approve" ? "approved" : "reopened"
+        }`,
         type: "Status",
       });
     }
 
-    res.json({ success: true, task });
+    return res.json({ success: true, task });
   } catch (error) {
     console.error("Review task error:", error.message);
-    res.status(500).json({ message: "Failed to review task" });
+
+    return res.status(500).json({
+      message: "Failed to review task",
+    });
   }
 };
 
@@ -503,8 +533,6 @@ export const logTaskTime = async (req, res) => {
       });
     }
 
-    const oldHours = task.actualHours;
-
     task.timeEntries.push({
       hours,
       remarks,
@@ -512,18 +540,193 @@ export const logTaskTime = async (req, res) => {
     });
 
     task.actualHours += hours;
+
+    // Identify the employee who logged the time.
+    task.$locals.auditUser = req.user._id;
+
+    // Task.js middleware records actualHours and timeEntries.
     await task.save();
 
-    await TaskHistory.create({
-      task: task._id,
-      changedBy: req.user._id,
-      field: "actualHours",
-      oldValue: oldHours,
-      newValue: task.actualHours,
-    });
+    return res.json({ success: true, task });
+  } catch (error) {
+    console.error("Log task time error:", error.message);
 
-    res.json({ success: true, task });
+    return res.status(500).json({
+      message: "Failed to log work time",
+    });
+  }
+};
+
+export const authorizeTaskAttachment = async (req, res, next) => {
+  try {
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    let allowed = req.user.role === "Admin";
+
+    if (req.user.role === "Employee") {
+      allowed =
+        task.assignedTo?.equals(req.user._id) ||
+        task.assignedBy?.equals(req.user._id);
+    }
+
+    if (req.user.role === "Manager" && task.project) {
+      const project = await Project.findById(task.project);
+
+      allowed = Boolean(
+        project &&
+        (project.createdBy.equals(req.user._id) ||
+          project.teamMembers.some((id) => id.equals(req.user._id))),
+      );
+    }
+
+    if (!allowed) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    req.task = task;
+    next();
   } catch {
-    res.status(500).json({ message: "Failed to log work time" });
+    res.status(500).json({ message: "Unable to verify task access" });
+  }
+};
+
+export const uploadTaskAttachments = async (req, res) => {
+  try {
+    if (!req.files?.length) {
+      return res.status(400).json({
+        message: "Select at least one file",
+      });
+    }
+
+    const task = req.task;
+
+    const newAttachments = req.files.map((file) => `/uploads/${file.filename}`);
+
+    task.attachments.push(...newAttachments);
+
+    // Record the authenticated user for automatic audit history.
+    task.$locals.auditUser = req.user._id;
+
+    // Task.js middleware records attachment changes automatically.
+    await task.save();
+
+    return res.json({
+      success: true,
+      message: "Attachments uploaded successfully",
+      attachments: task.attachments,
+    });
+  } catch (error) {
+    console.error("Attachment upload error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to upload attachments",
+    });
+  }
+};
+
+export const reviewTaskAssignment = async (req, res) => {
+  try {
+    const { action, reason } = req.body;
+
+    if (!["Admin", "Manager"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(400).json({
+        message: "Action must be approve or reject",
+      });
+    }
+
+    if (action === "reject" && !reason?.trim()) {
+      return res.status(400).json({
+        message: "A rejection reason is required",
+      });
+    }
+
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    if (task.status !== "Draft" || task.approvalStatus !== "Pending") {
+      return res.status(400).json({
+        message: "Task is not awaiting assignment approval",
+      });
+    }
+
+    if (!task.project) {
+      return res.status(400).json({
+        message: "Assignment approval requires a project",
+      });
+    }
+
+    if (req.user.role === "Manager") {
+      const project = await Project.findById(task.project);
+
+      const allowed =
+        project &&
+        (project.createdBy.equals(req.user._id) ||
+          project.teamMembers.some((id) => id.equals(req.user._id)));
+
+      if (!allowed) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    }
+
+    if (action === "approve") {
+      const dependencies = await Task.find({
+        _id: { $in: task.dependsOn },
+      });
+
+      const blocked = dependencies.some(
+        (dependency) => !["Completed", "Closed"].includes(dependency.status),
+      );
+
+      task.status = blocked ? "Blocked" : "Assigned";
+      task.approvalStatus = "Approved";
+      task.rejectionReason = "";
+    } else {
+      task.status = "Draft";
+      task.approvalStatus = "Rejected";
+      task.rejectionReason = reason.trim();
+    }
+
+    // Identify the Admin/Manager who made this decision.
+    task.$locals.auditUser = req.user._id;
+
+    // Task.js middleware records all changed fields automatically.
+    await task.save();
+
+    const recipients = [
+      ...new Set(
+        [task.assignedBy, task.assignedTo].filter(Boolean).map(String),
+      ),
+    ];
+
+    await Notification.insertMany(
+      recipients.map((userId) => ({
+        user: userId,
+        task: task._id,
+        type: "Status",
+        message:
+          action === "approve"
+            ? `Assignment approved: ${task.title}`
+            : `Assignment rejected: ${task.title}. Reason: ${reason.trim()}`,
+      })),
+    );
+
+    return res.json({ success: true, task });
+  } catch (error) {
+    console.error("Assignment review error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to review task assignment",
+    });
   }
 };

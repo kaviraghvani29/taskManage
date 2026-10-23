@@ -1,4 +1,67 @@
 import mongoose from "mongoose";
+import TaskHistory from "./TaskHistory.js";
+
+const AUDITED_FIELDS = [
+  "title",
+  "description",
+  "project",
+  "assignedTo",
+  "assignedBy",
+  "priority",
+  "status",
+  "dueDate",
+  "estimatedHours",
+  "actualHours",
+  "progress",
+  "remarks",
+  "tags",
+  "attachments",
+  "dependsOn",
+  "approvalStatus",
+  "rejectionReason",
+  "timeEntries",
+];
+
+// Convert Mongoose values to stable, comparable plain values.
+function normalizeValue(value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (value instanceof mongoose.Types.ObjectId) {
+    return value.toString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeValue);
+  }
+
+  if (typeof value?.toObject === "function") {
+    value = value.toObject({ depopulate: true });
+  }
+
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.keys(value)
+        .filter((key) => key !== "__v")
+        .sort()
+        .map((key) => [key, normalizeValue(value[key])]),
+    );
+  }
+
+  return value;
+}
+
+function sameValue(first, second) {
+  return (
+    JSON.stringify(normalizeValue(first)) ===
+    JSON.stringify(normalizeValue(second))
+  );
+}
 
 const taskSchema = new mongoose.Schema(
   {
@@ -98,6 +161,79 @@ const taskSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// PRE-SAVE: capture old values before the task is saved.
+taskSchema.pre("save", async function () {
+  this.$locals.auditWasNew = this.isNew;
+  this.$locals.auditChanges = [];
+
+  if (this.isNew) {
+    this.$locals.auditChanges.push({
+      field: "created",
+      oldValue: null,
+      newValue: {
+        title: this.title,
+        status: this.status,
+      },
+    });
+
+    return;
+  }
+
+  const oldTask = await this.constructor
+    .findById(this._id)
+    .select(AUDITED_FIELDS.join(" "))
+    .lean();
+
+  if (!oldTask) {
+    return;
+  }
+
+  for (const field of AUDITED_FIELDS) {
+    const oldValue = normalizeValue(oldTask[field]);
+    const newValue = normalizeValue(this.get(field));
+
+    if (!sameValue(oldValue, newValue)) {
+      this.$locals.auditChanges.push({
+        field,
+        oldValue,
+        newValue,
+      });
+    }
+  }
+});
+
+// POST-SAVE: persist the audit records after saving the task.
+taskSchema.post("save", async function () {
+  const changes = this.$locals.auditChanges || [];
+
+  if (changes.length === 0) {
+    return;
+  }
+
+  // Controllers will set auditUser to the authenticated user.
+  // The fallback keeps task creation auditable until controllers
+  // are updated to set the actor for every save.
+  const changedBy = this.$locals.auditUser || this.assignedBy;
+
+  if (!changedBy) {
+    throw new Error("Cannot record task history: changedBy user is missing.");
+  }
+
+  await TaskHistory.create(
+    changes.map((change) => ({
+      task: this._id,
+      changedBy,
+      field: change.field,
+      oldValue: change.oldValue,
+      newValue: change.newValue,
+      timestamp: new Date(),
+    })),
+  );
+
+  delete this.$locals.auditChanges;
+  delete this.$locals.auditWasNew;
+});
 
 taskSchema.virtual("isOverdue").get(function () {
   return Boolean(

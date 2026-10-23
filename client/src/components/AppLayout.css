@@ -1,0 +1,270 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  color: #20243a;
+}
+
+.app-sidebar {
+  width: 252px;
+  min-width: 252px;
+  background: #20243a;
+  color: #fff;
+  padding: 27px 17px 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px 35px;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #786af1;
+  color: white;
+  font-size: 23px;
+  font-weight: 800;
+  box-shadow: 0 5px 18px #786af14a;
+}
+
+.brand-name {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.brand-caption {
+  margin-top: 3px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #a4a8bf;
+}
+
+.sidebar-label {
+  padding: 0 12px 12px;
+  color: #9298b2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.sidebar-link {
+  min-height: 45px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #b9bdd0;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.sidebar-link:hover {
+  background: #ffffff0d;
+  color: #fff;
+}
+
+.sidebar-link.active {
+  background: #6c5ce7;
+  color: white;
+  box-shadow: 0 6px 15px #0e102c35;
+}
+
+.nav-icon {
+  width: 22px;
+  text-align: center;
+  font-size: 17px;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 19px 13px 0;
+}
+
+.sidebar-help-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f4f3ff;
+}
+
+.sidebar-bottom p {
+  margin: 7px 0 22px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #aeb2c7;
+}
+
+.sidebar-version {
+  padding-top: 14px;
+  border-top: 1px solid #ffffff18;
+  color: #9298b2;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.app-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.app-topbar {
+  min-height: 91px;
+  padding: 18px 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  background: #ffffffed;
+  border-bottom: 1px solid #e9eaf2;
+}
+
+.topbar-breadcrumb {
+  color: #8b90a5;
+  font-size: 11px;
+}
+
+.topbar-title {
+  margin-top: 4px;
+  font-family: "Manrope", sans-serif;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #eeecff;
+  color: #5e51d4;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.user-details {
+  display: grid;
+  gap: 2px;
+  min-width: 95px;
+}
+
+.user-details strong {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.user-details span {
+  color: #8b90a5;
+  font-size: 11px;
+}
+
+.logout-button {
+  margin-left: 8px;
+  padding: 9px 12px;
+  border: 1px solid #e5e6ef;
+  border-radius: 9px;
+  background: #fff;
+  color: #585d72;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.logout-button:hover {
+  background: #f5f4ff;
+  border-color: #d8d3ff;
+  color: #5e51d4;
+}
+
+.app-content {
+  padding: 30px 34px 45px;
+}
+
+@media (max-width: 850px) {
+  .app-sidebar {
+    width: 205px;
+    min-width: 205px;
+  }
+
+  .app-content {
+    padding: 22px 18px;
+  }
+
+  .app-topbar {
+    padding: 16px 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-shell {
+    display: block;
+  }
+
+  .app-sidebar {
+    width: 100%;
+    min-width: 0;
+    min-height: auto;
+    padding: 15px;
+  }
+
+  .brand {
+    padding: 0 5px 17px;
+  }
+
+  .sidebar-label,
+  .sidebar-bottom {
+    display: none;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .sidebar-link {
+    flex: 0 0 auto;
+    min-height: 39px;
+    padding: 0 11px;
+  }
+
+  .app-topbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .user-details {
+    display: none;
+  }
+
+  .logout-button {
+    margin-left: 0;
+  }
+}
