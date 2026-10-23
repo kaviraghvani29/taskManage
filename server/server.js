@@ -9,6 +9,8 @@ import projectRoutes from "./routes/projectRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import taskHistoryRoutes from "./routes/taskHistoryRoutes.js";
+// import { logTaskTime } from "../controllers/taskController.js";
 
 const app = express();
 
@@ -31,6 +33,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/task-history", taskHistoryRoutes);
 
 const startServer = async () => {
   await connectDB();

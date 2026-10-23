@@ -4,6 +4,46 @@ import User from "../models/User.js";
 import TaskHistory from "../models/TaskHistory.js";
 import Notification from "../models/Notification.js";
 
+const unblockDependentTasks = async (completedTaskId) => {
+  const blockedTasks = await Task.find({
+    status: "Blocked",
+    dependsOn: completedTaskId,
+  });
+
+  for (const task of blockedTasks) {
+    const dependencies = await Task.find({
+      _id: { $in: task.dependsOn },
+    });
+
+    const allCompleted = dependencies.every((dependency) =>
+      ["Completed", "Closed"].includes(dependency.status),
+    );
+
+    if (allCompleted) {
+      const oldStatus = task.status;
+      task.status = "Assigned";
+      await task.save();
+
+      await TaskHistory.create({
+        task: task._id,
+        changedBy: task.assignedBy,
+        field: "status",
+        oldValue: oldStatus,
+        newValue: task.status,
+      });
+
+      if (task.assignedTo) {
+        await Notification.create({
+          user: task.assignedTo,
+          task: task._id,
+          message: `Task "${task.title}" is unblocked and ready to start`,
+          type: "Status",
+        });
+      }
+    }
+  }
+};
+
 export const createTask = async (req, res) => {
   try {
     const {
@@ -414,6 +454,9 @@ export const reviewTask = async (req, res) => {
     task.rejectionReason = action === "reopen" ? reason.trim() : "";
 
     await task.save();
+    if (action === "approve") {
+      await unblockDependentTasks(task._id);
+    }
 
     await TaskHistory.create({
       task: task._id,
@@ -436,5 +479,51 @@ export const reviewTask = async (req, res) => {
   } catch (error) {
     console.error("Review task error:", error.message);
     res.status(500).json({ message: "Failed to review task" });
+  }
+};
+
+export const logTaskTime = async (req, res) => {
+  try {
+    const { hours, remarks = "" } = req.body;
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    if (!task.assignedTo?.equals(req.user._id)) {
+      return res.status(403).json({
+        message: "Only the assigned employee can log work",
+      });
+    }
+
+    if (typeof hours !== "number" || !Number.isFinite(hours) || hours <= 0) {
+      return res.status(400).json({
+        message: "Hours must be a positive number",
+      });
+    }
+
+    const oldHours = task.actualHours;
+
+    task.timeEntries.push({
+      hours,
+      remarks,
+      loggedBy: req.user._id,
+    });
+
+    task.actualHours += hours;
+    await task.save();
+
+    await TaskHistory.create({
+      task: task._id,
+      changedBy: req.user._id,
+      field: "actualHours",
+      oldValue: oldHours,
+      newValue: task.actualHours,
+    });
+
+    res.json({ success: true, task });
+  } catch {
+    res.status(500).json({ message: "Failed to log work time" });
   }
 };

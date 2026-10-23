@@ -4,6 +4,7 @@ import {
   getTasks,
   updateTask,
   reviewTask,
+  logTaskTime,
 } from "../controllers/taskController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -15,5 +16,6 @@ router.post("/", createTask);
 router.get("/", getTasks);
 router.patch("/:id", updateTask);
 router.patch("/:id/review", reviewTask);
+router.post("/:id/time-entries", logTaskTime);
 
 export default router;
