@@ -77,29 +77,59 @@ export const getWorkload = async (req, res) => {
 export const getUrgentTasks = async (req, res) => {
   try {
     const filter = await getTaskFilter(req.user);
+
     const tasks = await Task.find({
       ...filter,
       status: { $nin: ["Completed", "Closed"] },
     });
 
-    const weights = { Low: 1, Medium: 2, High: 3, Critical: 4 };
+    const weights = {
+      Low: 1,
+      Medium: 2,
+      High: 3,
+      Critical: 4,
+    };
+
+    const now = Date.now();
 
     const urgentTasks = tasks
       .map((task) => {
+        const priorityWeight = weights[task.priority] || 1;
+
         const daysLeft = task.dueDate
-          ? (new Date(task.dueDate) - Date.now()) / 86400000
+          ? (new Date(task.dueDate).getTime() - now) / 86400000
           : null;
 
-        const urgencyScore =
-          (weights[task.priority] || 1) +
-          (daysLeft === null ? 0 : 10 / Math.max(1, daysLeft));
+        let urgencyScore;
 
-        return { ...task.toJSON(), urgencyScore };
+        if (daysLeft !== null && daysLeft < 0) {
+          // Overdue tasks always rank above upcoming tasks.
+          urgencyScore = 100 + priorityWeight + Math.abs(daysLeft);
+        } else if (daysLeft !== null) {
+          // Upcoming tasks gain urgency as their deadline approaches.
+          urgencyScore = priorityWeight + 10 / Math.max(1, daysLeft);
+        } else {
+          // Tasks without deadlines use priority only.
+          urgencyScore = priorityWeight;
+        }
+
+        return {
+          ...task.toJSON(),
+          urgencyScore,
+        };
       })
       .sort((a, b) => b.urgencyScore - a.urgencyScore);
 
-    res.json({ success: true, tasks: urgentTasks });
-  } catch {
-    res.status(500).json({ message: "Failed to sort urgent tasks" });
+    return res.json({
+      success: true,
+      tasks: urgentTasks,
+    });
+  } catch (error) {
+    console.error("Urgent tasks error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to sort urgent tasks",
+    });
   }
 };

@@ -1,8 +1,8 @@
 import Task from "../models/Task.js";
 import Project from "../models/Project.js";
 import User from "../models/User.js";
-import TaskHistory from "../models/TaskHistory.js";
 import Notification from "../models/Notification.js";
+import mongoose from "mongoose";
 
 const unblockDependentTasks = async (completedTaskId, changedBy) => {
   const blockedTasks = await Task.find({
@@ -308,40 +308,135 @@ export const updateTask = async (req, res) => {
     const task = await Task.findById(req.params.id);
 
     if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
     }
 
-    const isAdmin = req.user.role === "Admin";
-    const isManager = req.user.role === "Manager";
-    const isEmployee = req.user.role === "Employee";
+    const userId = req.user._id.toString();
+    const role = req.user.role;
 
-    // Employee can access a task they are assigned to or created.
-    if (
-      isEmployee &&
-      !task.assignedTo?.equals(req.user._id) &&
-      !task.assignedBy.equals(req.user._id)
-    ) {
-      return res.status(403).json({ message: "Access denied" });
+    const isAdmin = role === "Admin";
+    const isManager = role === "Manager";
+    const isEmployee = role === "Employee";
+
+    if (!isAdmin && !isManager && !isEmployee) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
     }
 
-    // Manager must manage the task's project.
+    // Employees can only update assigned tasks or their own drafts.
+    if (isEmployee) {
+      const isAssignee = task.assignedTo?.toString() === userId;
+      const isOwnDraft =
+        task.assignedBy?.toString() === userId && task.status === "Draft";
+
+      if (!isAssignee && !isOwnDraft) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You can only update tasks assigned to you or your own drafts.",
+        });
+      }
+
+      const restrictedFields = [
+        "assignedTo",
+        "assignedBy",
+        "project",
+        "approvalStatus",
+        "rejectionReason",
+      ];
+
+      if (restrictedFields.some((field) => field in req.body)) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not allowed to change these task fields.",
+        });
+      }
+    }
+
+    // Load the associated project.
+    const projectDoc = task.project
+      ? await Project.findById(task.project)
+      : null;
+
+    // Managers can only manage projects they own or belong to.
     if (isManager) {
-      const projectDoc = task.project
-        ? await Project.findById(task.project)
-        : null;
-
       const canManage =
         projectDoc &&
-        (projectDoc.createdBy.equals(req.user._id) ||
-          projectDoc.teamMembers.some((id) => id.equals(req.user._id)));
+        (projectDoc.createdBy?.toString() === userId ||
+          projectDoc.teamMembers.some(
+            (member) => member.toString() === userId,
+          ));
 
       if (!canManage) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({
+          success: false,
+          message: "You cannot manage tasks in this project.",
+        });
       }
     }
 
     const oldStatus = task.status;
+    const oldAssigneeId = task.assignedTo?.toString() || null;
 
+    // Reassign tasks: Admin or authorized Manager only.
+    if (req.body.assignedTo !== undefined) {
+      if (!isAdmin && !isManager) {
+        return res.status(403).json({
+          success: false,
+          message: "Only Admins and Managers can reassign tasks.",
+        });
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(req.body.assignedTo)) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid employee ID is required.",
+        });
+      }
+
+      if (!projectDoc) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid project is required for reassignment.",
+        });
+      }
+
+      const newAssignee = await User.findById(req.body.assignedTo);
+
+      if (!newAssignee) {
+        return res.status(404).json({
+          success: false,
+          message: "The selected employee was not found.",
+        });
+      }
+
+      if (newAssignee.role !== "Employee" || newAssignee.isActive === false) {
+        return res.status(400).json({
+          success: false,
+          message: "Select an active employee for reassignment.",
+        });
+      }
+
+      const isProjectMember = projectDoc.teamMembers.some(
+        (member) => member.toString() === newAssignee._id.toString(),
+      );
+
+      if (!isProjectMember) {
+        return res.status(400).json({
+          success: false,
+          message: "The employee must belong to this project's team.",
+        });
+      }
+
+      task.assignedTo = newAssignee._id;
+    }
+
+    // Update ordinary task fields.
     const allowedFields = [
       "title",
       "description",
@@ -359,18 +454,19 @@ export const updateTask = async (req, res) => {
       }
     }
 
+    // Validate and apply status transitions.
     if (req.body.status !== undefined) {
       const requestedStatus = req.body.status;
 
       if (isEmployee) {
         if (["Closed", "Pending Review"].includes(requestedStatus)) {
           return res.status(403).json({
-            message: "Only a manager or admin can review tasks",
+            success: false,
+            message: "Only a Manager or Admin can review tasks.",
           });
         }
 
         if (requestedStatus === "Completed") {
-          // Employee completion requires Manager/Admin review.
           task.status = "Pending Review";
           task.approvalStatus = "Pending";
           task.progress = 100;
@@ -380,53 +476,102 @@ export const updateTask = async (req, res) => {
           task.status = requestedStatus;
         } else {
           return res.status(400).json({
-            message: "Invalid status transition",
+            success: false,
+            message: "Invalid status transition.",
           });
         }
       } else {
+        // Use the dedicated review endpoint for completion approval.
+        if (
+          ["Completed", "Pending Review", "Closed"].includes(requestedStatus)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Use the task review endpoint to approve or reopen a task.",
+          });
+        }
+
+        if (
+          !["Draft", "Open", "Assigned", "In Progress", "Blocked"].includes(
+            requestedStatus,
+          )
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid status.",
+          });
+        }
+
         task.status = requestedStatus;
       }
     }
 
-    // Dependencies must be completed before work can start.
-    if (task.status === "In Progress" && task.dependsOn.length) {
+    // A task cannot start while any dependency is unfinished.
+    if (task.status === "In Progress" && task.dependsOn.length > 0) {
       const dependencies = await Task.find({
         _id: { $in: task.dependsOn },
       });
 
       if (
+        dependencies.length !== task.dependsOn.length ||
         dependencies.some(
           (dependency) => !["Completed", "Closed"].includes(dependency.status),
         )
       ) {
         return res.status(400).json({
-          message: "Complete dependent tasks before starting this task",
+          success: false,
+          message: "Complete dependent tasks before starting this task.",
         });
       }
     }
 
-    // Tell the Task model which authenticated user made this change.
+    // Automatic TaskHistory middleware records changed fields.
     task.$locals.auditUser = req.user._id;
-
-    // Task.js middleware records all changed fields automatically.
     await task.save();
 
-    // Keep the existing status-change notification.
+    // Notify the new assignee after successful reassignment.
+    const newAssigneeId = task.assignedTo?.toString() || null;
+
+    if (oldAssigneeId !== newAssigneeId && newAssigneeId) {
+      await Notification.create({
+        user: task.assignedTo,
+        task: task._id,
+        message: `Task "${task.title}" has been assigned to you.`,
+        type: "Assignment",
+      });
+
+      // Notify the previous assignee as well.
+      if (oldAssigneeId) {
+        await Notification.create({
+          user: oldAssigneeId,
+          task: task._id,
+          message: `Task "${task.title}" has been reassigned to another employee.`,
+          type: "Assignment",
+        });
+      }
+    }
+
+    // Notify the current assignee of status changes.
     if (oldStatus !== task.status && task.assignedTo) {
       await Notification.create({
         user: task.assignedTo,
         task: task._id,
-        message: `Task "${task.title}" status changed to ${task.status}`,
+        message: `Task "${task.title}" status changed to ${task.status}.`,
         type: "Status",
       });
     }
 
-    return res.json({ success: true, task });
+    return res.json({
+      success: true,
+      task,
+    });
   } catch (error) {
     console.error("Update task error:", error.message);
 
     return res.status(500).json({
-      message: "Failed to update task",
+      success: false,
+      message: "Failed to update task.",
     });
   }
 };
