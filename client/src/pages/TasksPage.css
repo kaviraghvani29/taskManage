@@ -551,3 +551,127 @@
   overflow: hidden;
   opacity: 0;
 }
+
+/* Prevent horizontal scrolling */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* Keep the task table within the available width */
+table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+/* Allow long content to wrap instead of stretching the table */
+th,
+td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Keep action buttons compact and allow them to wrap */
+.task-actions,
+.task-action-buttons,
+.actions-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.task-action {
+  flex: 0 0 auto;
+  min-width: 34px;
+  padding: 8px;
+}
+
+/* Make the table easier to use on smaller screens */
+@media (max-width: 900px) {
+  th,
+  td {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+
+  .task-action {
+    min-width: 30px;
+    padding: 6px;
+  }
+}
+
+/* TaskFlow pagination */
+.tasks-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 28px;
+}
+
+.tasks-pagination > span {
+  color: #858ba5;
+  font-size: 14px;
+}
+
+.tasks-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tasks-pagination > div > button {
+  min-width: 88px;
+  padding: 11px 18px;
+  border: 1px solid #e5e7f5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #626782;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.tasks-pagination > div > button:hover:not(:disabled) {
+  border-color: #6857ed;
+  background: #f5f3ff;
+  color: #6857ed;
+}
+
+.tasks-pagination > div > button:last-child:not(:disabled) {
+  border-color: #6857ed;
+  background: #6857ed;
+  color: #ffffff;
+}
+
+.tasks-pagination > div > button:last-child:hover:not(:disabled) {
+  border-color: #5846df;
+  background: #5846df;
+}
+
+.tasks-pagination > div > button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .tasks-pagination {
+    padding: 16px;
+  }
+
+  .tasks-pagination > div > button {
+    min-width: 76px;
+    padding: 9px 12px;
+  }
+}

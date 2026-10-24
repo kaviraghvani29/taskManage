@@ -430,9 +430,11 @@ export default function TasksPage() {
           <button
             key="start"
             className="task-action primary"
+            title="Start task"
+            aria-label="Start task"
             onClick={() => handleStatus(task, "In Progress")}
           >
-            Start
+            ▶
           </button>,
         );
       }
@@ -442,23 +444,29 @@ export default function TasksPage() {
           <button
             key="progress"
             className="task-action secondary"
+            title="Update progress"
+            aria-label="Update progress"
             onClick={() => handleProgressUpdate(task)}
           >
-            Update progress
+            ✎
           </button>,
           <button
             key="complete"
             className="task-action primary"
+            title="Complete task"
+            aria-label="Complete task"
             onClick={() => handleStatus(task, "Completed")}
           >
-            Complete task
+            ✓
           </button>,
           <button
             key="time"
             className="task-action secondary"
+            title="Log time"
+            aria-label="Log time"
             onClick={() => handleLogTime(task)}
           >
-            Log time
+            ⏱
           </button>,
         );
       }
@@ -469,16 +477,20 @@ export default function TasksPage() {
         <button
           key="approve"
           className="task-action primary"
+          title="Approve completed task"
+          aria-label="Approve completed task"
           onClick={() => handleReview(task, "approve")}
         >
-          Approve
+          ✓
         </button>,
         <button
           key="reopen"
           className="task-action secondary"
+          title="Reopen task"
+          aria-label="Reopen task"
           onClick={() => handleReview(task, "reopen")}
         >
-          Reopen
+          ↶
         </button>,
       );
     }
@@ -492,16 +504,20 @@ export default function TasksPage() {
         <button
           key="approve-assignment"
           className="task-action primary"
+          title="Approve assignment"
+          aria-label="Approve assignment"
           onClick={() => handleAssignmentReview(task, "approve")}
         >
-          Approve assignment
+          ✓
         </button>,
         <button
           key="reject-assignment"
           className="task-action secondary"
+          title="Reject assignment"
+          aria-label="Reject assignment"
           onClick={() => handleAssignmentReview(task, "reject")}
         >
-          Reject assignment
+          ✕
         </button>,
       );
     }
@@ -511,9 +527,11 @@ export default function TasksPage() {
         <button
           key="reassign"
           className="task-action secondary"
+          title="Reassign task"
+          aria-label="Reassign task"
           onClick={() => handleReassign(task)}
         >
-          Reassign
+          ⇄
         </button>,
       );
     }
@@ -528,9 +546,11 @@ export default function TasksPage() {
         <button
           key="edit"
           className="task-action secondary"
+          title="Edit task"
+          aria-label="Edit task"
           onClick={() => handleEditTask(task)}
         >
-          Edit
+          ✎
         </button>,
       );
     }
@@ -584,9 +604,9 @@ export default function TasksPage() {
     <AppLayout title="Tasks">
       <section className="tasks-intro">
         <div>
-          <span className="tasks-eyebrow">TASK MANAGEMENT</span>
-          <h1>Tasks workspace</h1>
-          <p>Organize priorities, track deadlines, and keep work moving.</p>
+          {/* <span className="tasks-eyebrow">TASK MANAGEMENT</span> */}
+          {/* <h1>Tasks workspace</h1> */}
+          {/* <p>Organize priorities, track deadlines, and keep work moving.</p> */}
         </div>
 
         <button
@@ -811,7 +831,7 @@ export default function TasksPage() {
           <div>
             <h2>All tasks</h2>
             <p>
-              Search tasks and filter the list by status, priority, or deadline.
+              {/* Search tasks and filter the list by status, priority, or deadline. */}
             </p>
           </div>
           <span className="task-result-count">{tasks.length} shown</span>
@@ -973,20 +993,31 @@ export default function TasksPage() {
               </span>
 
               <div>
-                onClick=
-                {() =>
-                  loadTasks({
-                    ...getFilterParams(),
-                    page: pagination.page - 1,
-                  })
-                }
-                onClick=
-                {() =>
-                  loadTasks({
-                    ...getFilterParams(),
-                    page: pagination.page + 1,
-                  })
-                }
+                <button
+                  type="button"
+                  disabled={pagination.page <= 1}
+                  onClick={() =>
+                    loadTasks({
+                      ...getFilterParams(),
+                      page: pagination.page - 1,
+                    })
+                  }
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="button"
+                  disabled={pagination.page >= pagination.totalPages}
+                  onClick={() =>
+                    loadTasks({
+                      ...getFilterParams(),
+                      page: pagination.page + 1,
+                    })
+                  }
+                >
+                  Next
+                </button>
               </div>
             </div>
           </div>

@@ -56,28 +56,28 @@ export default function DashboardPage() {
     {
       label: "Total tasks",
       value: tasks.length,
-      note: "Tasks you can access",
+      // note: "Tasks you can access",
       icon: "▦",
       color: "violet",
     },
     {
       label: "In progress",
       value: countStatus("In Progress"),
-      note: "Currently being worked on",
+      // note: "Currently being worked on",
       icon: "↗",
       color: "blue",
     },
     {
       label: "Pending review",
       value: countStatus("Pending Review"),
-      note: "Waiting for approval",
+      // note: "Waiting for approval",
       icon: "◷",
       color: "orange",
     },
     {
       label: "Overdue tasks",
       value: overdueTasks.length,
-      note: "Past their due date",
+      // note: "Past their due date",
       icon: "!",
       color: "red",
     },
@@ -87,7 +87,7 @@ export default function DashboardPage() {
     <AppLayout ti tle="Overview">
       <section className="welcome-section">
         <div>
-          <span className="eyebrow">YOUR WORKSPACE</span>
+          {/* <span className="eyebrow">YOUR WORKSPACE</span> */}
           <h1>Welcome back, {user?.name?.split(" ")[0] || "there"} 👋</h1>
         </div>
         <div className="welcome-date">
@@ -112,8 +112,8 @@ export default function DashboardPage() {
 
       <div className="dashboard-section-heading">
         <div>
-          <h2>Workspace overview</h2>
-          <p>Track progress and keep your work moving.</p>
+          {/* <h2>Workspace overview</h2>
+          <p>Track progress and keep your work moving.</p> */}
         </div>
         <span className="live-indicator">LIVE DATA</span>
       </div>
@@ -121,10 +121,13 @@ export default function DashboardPage() {
       <div className="dashboard-stats">
         {stats.map((stat) => (
           <article className="stat-card" key={stat.label}>
-            <div className={`stat-icon ${stat.color}`}>{stat.icon}</div>
-            <div className="stat-label">{stat.label}</div>
+            <div className="stat-card-header">
+              <div className={`stat-icon ${stat.color}`}>{stat.icon}</div>
+
+              <div className="stat-label">{stat.label}</div>
+            </div>
+
             <div className="stat-value">{loading ? "—" : stat.value}</div>
-            <div className="stat-note">{stat.note}</div>
           </article>
         ))}
       </div>
@@ -134,7 +137,6 @@ export default function DashboardPage() {
           <div className="panel-heading">
             <div>
               <h2>Recent tasks</h2>
-              <p>Your latest assigned and created tasks.</p>
             </div>
             <a href="/tasks" className="panel-link">
               View all →
@@ -180,7 +182,6 @@ export default function DashboardPage() {
             <div className="panel-heading">
               <div>
                 <h2>My workload</h2>
-                <p>Open task estimates</p>
               </div>
               <span className="side-panel-icon">◷</span>
             </div>
@@ -205,13 +206,13 @@ export default function DashboardPage() {
             </div>
 
             <div className="workload-footer">
-              <span>0 hrs</span>
-              <span>40 hrs capacity reference</span>
+              {/* <span>0 hrs</span> */}
+              {/* <span>40 hrs capacity reference</span> */}
             </div>
 
             {myWorkload?.overloaded && (
               <p className="workload-warning">
-                Your estimated workload exceeds 40 hours.
+                {/* Your estimated workload exceeds 40 hours. */}
               </p>
             )}
           </section>
@@ -220,7 +221,7 @@ export default function DashboardPage() {
             <div className="panel-heading">
               <div>
                 <h2>Notifications</h2>
-                <p>Keep track of updates.</p>
+                {/* <p>Keep track of updates.</p> */}
               </div>
               <span className="notification-count">{unreadNotifications}</span>
             </div>

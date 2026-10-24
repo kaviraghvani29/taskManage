@@ -69,11 +69,9 @@ export default function AppLayout({ children, title = "Overview" }) {
           <div className="brand-mark">T</div>
           <div>
             <div className="brand-name">TaskFlow</div>
-            <div className="brand-caption">WORKSPACE</div>
+            {/* <div className="brand-caption">WORKSPACE</div> */}
           </div>
         </div>
-
-        <div className="sidebar-label">WORKSPACE</div>
 
         <nav className="sidebar-nav">
           {navigation
@@ -94,8 +92,6 @@ export default function AppLayout({ children, title = "Overview" }) {
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="sidebar-help-title">Stay organized</div>
-          <p>Keep your tasks, deadlines and team in sync.</p>
           <div className="sidebar-version">TASKFLOW · MERN EDITION</div>
         </div>
       </aside>
@@ -103,7 +99,7 @@ export default function AppLayout({ children, title = "Overview" }) {
       <div className="app-main">
         <header className="app-topbar">
           <div>
-            <div className="topbar-breadcrumb">Workspace / {title}</div>
+            {/* <div className="topbar-breadcrumb">Workspace / {title}</div> */}
             <div className="topbar-title">{title}</div>
           </div>
 

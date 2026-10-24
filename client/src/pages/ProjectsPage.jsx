@@ -85,9 +85,9 @@ export default function ProjectsPage() {
     <AppLayout title="Projects">
       <section className="projects-intro">
         <div>
-          <span className="projects-eyebrow">PROJECT WORKSPACE</span>
-          <h1>Projects</h1>
-          <p>Organize your work and bring your team together.</p>
+          {/* <span className="projects-eyebrow">PROJECT WORKSPACE</span> */}
+          {/* <h1>Projects</h1> */}
+          {/* <p>Organize your work and bring your team together.</p> */}
         </div>
 
         {canManage && (
@@ -112,7 +112,7 @@ export default function ProjectsPage() {
           <div className="projects-panel-heading">
             <div>
               <h2>Create a project</h2>
-              <p>Define the project and choose its initial team.</p>
+              {/* <p>Define the project and choose its initial team.</p> */}
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export default function ProjectsPage() {
       <div className="projects-list-heading">
         <div>
           <h2>Your projects</h2>
-          <p>Projects you created or are a member of.</p>
+          {/* <p>Projects you created or are a member of.</p> */}
         </div>
         <span className="projects-count">{projects.length} projects</span>
       </div>

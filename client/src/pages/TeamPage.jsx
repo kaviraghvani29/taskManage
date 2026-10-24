@@ -114,9 +114,9 @@ export default function TeamPage() {
     <AppLayout title="Team Management">
       <section className="team-intro">
         <div>
-          <span className="team-eyebrow">PEOPLE &amp; PERMISSIONS</span>
-          <h1>Team management</h1>
-          <p>Manage workspace members and their access.</p>
+          {/* <span className="team-eyebrow">PEOPLE &amp; PERMISSIONS</span> */}
+          {/* <h1>Team management</h1> */}
+          {/* <p>Manage workspace members and their access.</p> */}
         </div>
 
         {isAdmin && (

@@ -58,9 +58,9 @@ export default function NotificationsPage() {
     <AppLayout title="Notifications">
       <section className="notifications-intro">
         <div>
-          <span className="notifications-eyebrow">YOUR UPDATES</span>
-          <h1>Notifications</h1>
-          <p>Stay informed about assignments, deadlines, and task progress.</p>
+          {/* <span className="notifications-eyebrow">YOUR UPDATES</span> */}
+          {/* <h1>Notifications</h1> */}
+          {/* <p>Stay informed about assignments, deadlines, and task progress.</p> */}
         </div>
 
         <div className="notification-summary-card">
@@ -74,8 +74,8 @@ export default function NotificationsPage() {
       <section className="notifications-panel">
         <div className="notifications-toolbar">
           <div>
-            <h2>Your activity feed</h2>
-            <p>Updates from your workspace.</p>
+            <h2>Your Notifications</h2>
+            {/* <p>Updates from your workspace.</p> */}
           </div>
 
           <select

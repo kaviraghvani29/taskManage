@@ -67,9 +67,9 @@ export default function ActivityPage() {
     <AppLayout title="Activity History">
       <section className="activity-intro">
         <div>
-          <span className="activity-eyebrow">AUDIT TRAIL</span>
+          {/* <span className="activity-eyebrow">AUDIT TRAIL</span>
           <h1>Activity history</h1>
-          <p>Follow task changes, status transitions, and review decisions.</p>
+          <p>Follow task changes, status transitions, and review decisions.</p> */}
         </div>
         <div className="activity-total">
           <span>Recorded changes</span>
@@ -83,7 +83,7 @@ export default function ActivityPage() {
         <div className="activity-toolbar">
           <div>
             <h2>Task audit trail</h2>
-            <p>Select a task to inspect its recorded changes.</p>
+            {/* <p>Select a task to inspect its recorded changes.</p> */}
           </div>
 
           <select

@@ -55,12 +55,12 @@ export default function ReportsPage() {
     <AppLayout title="Reports & Analytics">
       <section className="reports-intro">
         <div>
-          <span className="reports-eyebrow">INSIGHTS & PERFORMANCE</span>
-          <h1>Reports & analytics</h1>
-          <p>
+          {/* <span className="reports-eyebrow">INSIGHTS & PERFORMANCE</span> */}
+          {/* <h1>Reports & analytics</h1> */}
+          {/* <p>
             Understand task progress, team workload, and work that needs
             attention.
-          </p>
+          </p> */}
         </div>
         <button
           className="reports-refresh"
@@ -76,22 +76,22 @@ export default function ReportsPage() {
         <article className="reports-summary-card">
           <span>Total visible tasks</span>
           <strong>{loading ? "—" : totalTasks}</strong>
-          <small>Across your accessible workspace</small>
+          {/* <small>Across your accessible workspace</small> */}
         </article>
         <article className="reports-summary-card">
           <span>Completed or closed</span>
           <strong>{loading ? "—" : completedTasks}</strong>
-          <small>Tasks at the end of the workflow</small>
+          {/* <small>Tasks at the end of the workflow</small> */}
         </article>
         <article className="reports-summary-card">
           <span>Urgent tasks</span>
           <strong>{loading ? "—" : urgentTasks.length}</strong>
-          <small>Open tasks ordered by urgency</small>
+          {/* <small>Open tasks ordered by urgency</small> */}
         </article>
         <article className="reports-summary-card warning">
           <span>Overloaded employees</span>
           <strong>{loading ? "—" : overloadedEmployees}</strong>
-          <small>Estimated open work exceeds 40 hours</small>
+          {/* <small>Estimated open work exceeds 40 hours</small> */}
         </article>
       </div>
 
@@ -100,7 +100,7 @@ export default function ReportsPage() {
           <div className="reports-panel-heading">
             <div>
               <h2>Tasks by status</h2>
-              <p>Distribution of visible tasks across workflow stages.</p>
+              {/* <p>Distribution of visible tasks across workflow stages.</p> */}
             </div>
           </div>
 
@@ -135,7 +135,7 @@ export default function ReportsPage() {
           <div className="reports-panel-heading">
             <div>
               <h2>Workload overview</h2>
-              <p>Estimated hours for open tasks by employee.</p>
+              {/* <p>Estimated hours for open tasks by employee.</p> */}
             </div>
           </div>
 
@@ -185,7 +185,7 @@ export default function ReportsPage() {
             </div>
           )}
           <p className="reports-footnote">
-            40 hours is the assignment's workload threshold.
+            {/* 40 hours is the assignment's workload threshold. */}
           </p>
         </section>
       </div>
@@ -194,7 +194,7 @@ export default function ReportsPage() {
         <div className="reports-panel-heading">
           <div>
             <h2>Urgent tasks</h2>
-            <p>Open tasks ranked by the backend urgency score.</p>
+            {/* <p>Open tasks ranked by the backend urgency score.</p> */}
           </div>
           <span className="reports-table-count">
             {urgentTasks.length} tasks
