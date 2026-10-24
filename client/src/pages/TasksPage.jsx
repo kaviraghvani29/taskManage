@@ -66,18 +66,21 @@ export default function TasksPage() {
     setError("");
 
     try {
-      const requests = [api.get("/tasks"), api.get("/projects")];
-
-      if (canAssign) requests.push(api.get("/users"));
+      const requests = [
+        api.get("/tasks", { params: { page: 1, limit: 10 } }),
+        api.get("/projects"),
+        api.get("/users"),
+      ];
 
       const results = await Promise.all(requests);
 
       setTasks(results[0].data.tasks || []);
+      if (results[0].data.pagination) {
+        setPagination(results[0].data.pagination);
+      }
       setProjects(results[1].data.projects || []);
 
-      if (canAssign) {
-        setUsers(results[2].data.users || []);
-      }
+      setUsers(results[2].data.users || []);
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -94,6 +97,17 @@ export default function TasksPage() {
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const getFilterParams = () => {
+    const params = {};
+
+    if (filters.search.trim()) params.search = filters.search.trim();
+    if (filters.status) params.status = filters.status;
+    if (filters.priority) params.priority = filters.priority;
+    if (filters.overdue) params.overdue = "true";
+
+    return params;
   };
 
   const availableDependencies = tasks.filter(
@@ -167,8 +181,10 @@ export default function TasksPage() {
       };
 
       if (form.project) payload.project = form.project;
-      if (canAssign && form.assignedTo) {
-        payload.assignedTo = form.assignedTo;
+      if (canAssign || user?.role === "Employee") {
+        if (form.assignedTo) {
+          payload.assignedTo = form.assignedTo;
+        }
       }
       if (form.dueDate) {
         payload.dueDate = new Date(form.dueDate).toISOString();
@@ -267,6 +283,44 @@ export default function TasksPage() {
     }
   };
 
+  const handleEditTask = async (task) => {
+    const title = window.prompt("Task title:", task.title);
+    if (title === null) return;
+
+    const description = window.prompt(
+      "Task description:",
+      task.description || "",
+    );
+    if (description === null) return;
+
+    const priority = window.prompt(
+      "Priority (Low, Medium, High, Critical):",
+      task.priority,
+    );
+    if (priority === null) return;
+
+    if (!["Low", "Medium", "High", "Critical"].includes(priority)) {
+      setError("Please enter a valid priority.");
+      return;
+    }
+
+    try {
+      await api.patch(`/tasks/${task._id}`, {
+        title: title.trim(),
+        description: description.trim(),
+        priority,
+      });
+
+      setMessage("Task details updated successfully.");
+      await loadTasks({
+        ...getFilterParams(),
+        page: pagination.page,
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not edit the task.");
+    }
+  };
+
   const handleLogTime = async (task) => {
     const value = window.prompt("Hours worked (e.g. 1.5):");
     if (value === null) return;
@@ -328,6 +382,45 @@ export default function TasksPage() {
     }
   };
 
+  const handleReassign = async (task) => {
+    const employees = users.filter(
+      (item) => item.role === "Employee" && item.isActive !== false,
+    );
+
+    const employeeList = employees
+      .map((item) => `${item.name} (${item.email})`)
+      .join("\n");
+
+    const email = window.prompt(
+      `Enter the new assignee's email:\n${employeeList}`,
+    );
+
+    if (!email) return;
+
+    const selectedEmployee = employees.find(
+      (item) => item.email.toLowerCase() === email.trim().toLowerCase(),
+    );
+
+    if (!selectedEmployee) {
+      setError("Please enter a valid employee email.");
+      return;
+    }
+
+    try {
+      await api.patch(`/tasks/${task._id}`, {
+        assignedTo: selectedEmployee._id,
+      });
+
+      setMessage(`Task reassigned to ${selectedEmployee.name}.`);
+      await loadTasks({
+        ...getFilterParams(),
+        page: pagination.page,
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not reassign the task.");
+    }
+  };
+
   const getActions = (task) => {
     const actions = [];
 
@@ -352,6 +445,13 @@ export default function TasksPage() {
             onClick={() => handleProgressUpdate(task)}
           >
             Update progress
+          </button>,
+          <button
+            key="complete"
+            className="task-action primary"
+            onClick={() => handleStatus(task, "Completed")}
+          >
+            Complete task
           </button>,
           <button
             key="time"
@@ -402,6 +502,35 @@ export default function TasksPage() {
           onClick={() => handleAssignmentReview(task, "reject")}
         >
           Reject assignment
+        </button>,
+      );
+    }
+
+    if (canAssign && !["Closed", "Completed"].includes(task.status)) {
+      actions.push(
+        <button
+          key="reassign"
+          className="task-action secondary"
+          onClick={() => handleReassign(task)}
+        >
+          Reassign
+        </button>,
+      );
+    }
+
+    const canEdit =
+      canAssign ||
+      task.assignedTo?._id === user?._id ||
+      (task.assignedBy?._id === user?._id && task.status === "Draft");
+
+    if (canEdit && !["Closed", "Completed"].includes(task.status)) {
+      actions.push(
+        <button
+          key="edit"
+          className="task-action secondary"
+          onClick={() => handleEditTask(task)}
+        >
+          Edit
         </button>,
       );
     }
@@ -557,7 +686,7 @@ export default function TasksPage() {
               </select>
             </div>
 
-            {canAssign && (
+            {(canAssign || user?.role === "Employee") && (
               <div className="task-form-field">
                 <label htmlFor="task-assignee">Assign to employee *</label>
                 <select
@@ -568,7 +697,12 @@ export default function TasksPage() {
                 >
                   <option value="">Select employee</option>
                   {users
-                    .filter((item) => item.role === "Employee")
+                    .filter(
+                      (item) =>
+                        item.role === "Employee" &&
+                        item.isActive !== false &&
+                        (user?.role !== "Employee" || item._id !== user?._id),
+                    )
                     .map((item) => (
                       <option key={item._id} value={item._id}>
                         {item.name} ({item.email})
@@ -839,21 +973,20 @@ export default function TasksPage() {
               </span>
 
               <div>
-                <button
-                  className="task-action secondary"
-                  disabled={pagination.page <= 1}
-                  onClick={() => loadTasks({ page: pagination.page - 1 })}
-                >
-                  Previous
-                </button>
-
-                <button
-                  className="task-action primary"
-                  disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => loadTasks({ page: pagination.page + 1 })}
-                >
-                  Next
-                </button>
+                onClick=
+                {() =>
+                  loadTasks({
+                    ...getFilterParams(),
+                    page: pagination.page - 1,
+                  })
+                }
+                onClick=
+                {() =>
+                  loadTasks({
+                    ...getFilterParams(),
+                    page: pagination.page + 1,
+                  })
+                }
               </div>
             </div>
           </div>

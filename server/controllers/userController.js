@@ -15,10 +15,33 @@ export const getUsers = async (req, res) => {
 
       projects.forEach((project) => {
         ids.add(project.createdBy.toString());
-        project.teamMembers.forEach((member) => ids.add(member.toString()));
+        project.teamMembers.forEach((member) => {
+          ids.add(member.toString());
+        });
       });
 
       filter._id = { $in: [...ids] };
+    } else if (req.user.role === "Employee") {
+      const projects = await Project.find({
+        teamMembers: req.user._id,
+      }).select("teamMembers");
+
+      const ids = new Set();
+
+      projects.forEach((project) => {
+        project.teamMembers.forEach((member) => {
+          ids.add(member.toString());
+        });
+      });
+
+      filter = {
+        isActive: true,
+        role: "Employee",
+        _id: {
+          $in: [...ids],
+          $ne: req.user._id,
+        },
+      };
     } else if (req.user.role !== "Admin") {
       return res.status(403).json({ message: "Access denied" });
     }
@@ -28,7 +51,7 @@ export const getUsers = async (req, res) => {
       .sort({ name: 1 });
 
     res.json({ success: true, users });
-  } catch {
+  } catch (error) {
     res.status(500).json({ message: "Failed to fetch users" });
   }
 };
