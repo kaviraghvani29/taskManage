@@ -32,6 +32,7 @@ export default function TasksPage() {
   const canAssign = ["Admin", "Manager"].includes(user?.role);
 
   const [tasks, setTasks] = useState([]);
+  const [viewMode, setViewMode] = useState("table");
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState(initialForm);
@@ -214,6 +215,45 @@ export default function TasksPage() {
     } catch (err) {
       setError(err.response?.data?.message || "Could not update task status.");
     }
+  };
+
+  const handleKanbanDragStart = (event, task) => {
+    event.dataTransfer.setData("text/plain", task._id);
+    event.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleKanbanDragOver = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+
+  const handleKanbanDrop = async (event, targetStatus) => {
+    event.preventDefault();
+
+    const taskId = event.dataTransfer.getData("text/plain");
+    const task = tasks.find((item) => item._id === taskId);
+
+    if (!task || task.status === targetStatus) return;
+
+    const movableStatuses = ["Open", "Assigned", "In Progress", "Blocked"];
+
+    if (!movableStatuses.includes(targetStatus)) {
+      setError("Use the task action buttons to complete or review tasks.");
+      return;
+    }
+
+    const assignedToId = task.assignedTo?._id || task.assignedTo;
+
+    if (
+      user?.role === "Employee" &&
+      String(assignedToId) !== String(user?._id)
+    ) {
+      setError("You can move only tasks assigned to you.");
+      return;
+    }
+
+    setError("");
+    await handleStatus(task, targetStatus);
   };
 
   const handleReview = async (task, action) => {
@@ -892,6 +932,24 @@ export default function TasksPage() {
           </button>
         </form>
 
+        <div className="task-view-toggle">
+          <button
+            type="button"
+            className={viewMode === "table" ? "active" : ""}
+            onClick={() => setViewMode("table")}
+          >
+            ☷ Table View
+          </button>
+
+          <button
+            type="button"
+            className={viewMode === "kanban" ? "active" : ""}
+            onClick={() => setViewMode("kanban")}
+          >
+            ▦ Kanban Board
+          </button>
+        </div>
+
         {loading ? (
           <div className="tasks-empty">Loading tasks...</div>
         ) : tasks.length === 0 ? (
@@ -899,6 +957,74 @@ export default function TasksPage() {
             <div className="empty-task-icon">✓</div>
             <h3>No tasks found</h3>
             <p>Try another filter or create a new task.</p>
+          </div>
+        ) : viewMode === "kanban" ? (
+          <div className="kanban-board">
+            {statuses.map((status) => {
+              const columnTasks = tasks.filter(
+                (task) => task.status === status,
+              );
+
+              return (
+                <section
+                  className="kanban-column"
+                  key={status}
+                  onDragOver={handleKanbanDragOver}
+                  onDrop={(event) => handleKanbanDrop(event, status)}
+                >
+                  <div className="kanban-column-header">
+                    <h3>{status}</h3>
+                    <span>{columnTasks.length}</span>
+                  </div>
+
+                  <div className="kanban-column-body">
+                    {columnTasks.length === 0 ? (
+                      <p className="kanban-empty">No tasks</p>
+                    ) : (
+                      columnTasks.map((task) => (
+                        <article
+                          className="kanban-task-card"
+                          key={task._id}
+                          draggable
+                          onDragStart={(event) =>
+                            handleKanbanDragStart(event, task)
+                          }
+                        >
+                          <span
+                            className={`priority-badge ${(task.priority || "Medium").toLowerCase()}`}
+                          >
+                            {task.priority || "Medium"}
+                          </span>
+
+                          <h4>{task.title}</h4>
+
+                          <p className="kanban-project">
+                            {getProjectName(task)}
+                          </p>
+
+                          <div className="kanban-task-details">
+                            <span>
+                              Assignee: {task.assignedTo?.name || "Unassigned"}
+                            </span>
+                            <span>Progress: {task.progress ?? 0}%</span>
+                            <span>
+                              Due:{" "}
+                              {task.dueDate
+                                ? new Date(task.dueDate).toLocaleDateString()
+                                : "No due date"}
+                            </span>
+                          </div>
+
+                          <div className="task-row-actions">
+                            {getActions(task)}
+                          </div>
+                        </article>
+                      ))
+                    )}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         ) : (
           <div className="tasks-table-wrap">
