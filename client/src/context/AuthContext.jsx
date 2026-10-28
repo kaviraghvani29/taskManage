@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../services/api";
+import { socket } from "../services/socket";
 
 const AuthContext = createContext();
 
@@ -14,6 +15,18 @@ export function AuthProvider({ children }) {
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (user?._id) {
+      socket.connect();
+    } else {
+      socket.disconnect();
+    }
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?._id]);
 
   const login = async (data) => {
     const res = await api.post("/auth/login", data);

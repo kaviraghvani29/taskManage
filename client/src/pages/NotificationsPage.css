@@ -256,3 +256,20 @@
     font-size: 9px;
   }
 }
+
+.sidebar-notification-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 0 0 2px #22263b;
+}

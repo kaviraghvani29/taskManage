@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AppLayout from "../components/AppLayout";
 import api from "../services/api";
 import "./NotificationsPage.css";
+import { socket } from "../services/socket";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -24,11 +25,34 @@ export default function NotificationsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const handleNewNotification = (notification) => {
+      if (!notification?._id) return;
+
+      setNotifications((current) => {
+        const alreadyExists = current.some(
+          (item) => item._id === notification._id,
+        );
+
+        if (alreadyExists) return current;
+
+        return [notification, ...current];
+      });
+    };
+
+    socket.on("notification:new", handleNewNotification);
+
+    return () => {
+      socket.off("notification:new", handleNewNotification);
+    };
+  }, []);
+
   const markRead = async (id) => {
     setError("");
 
     try {
       await api.patch(`/notifications/${id}/read`);
+      window.dispatchEvent(new Event("notifications-read"));
       await loadNotifications();
     } catch (err) {
       setError(err.response?.data?.message || "Could not mark as read.");

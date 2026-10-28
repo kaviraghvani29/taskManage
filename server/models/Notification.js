@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getSocketServer } from "../config/socket.js";
 
 const notificationSchema = new mongoose.Schema(
   {
@@ -28,5 +29,13 @@ const notificationSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+notificationSchema.post("save", function (doc) {
+  const io = getSocketServer();
+
+  if (!io) return;
+
+  io.to(`user:${doc.user.toString()}`).emit("notification:new", doc.toObject());
+});
 
 export default mongoose.model("Notification", notificationSchema);
