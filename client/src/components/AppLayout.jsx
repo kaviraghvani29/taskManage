@@ -55,18 +55,24 @@ export default function AppLayout({ children, title = "Overview" }) {
   const navigate = useNavigate();
 
   const [bellOpen, setBellOpen] = useState(false);
-  const [recentNotifications, setRecentNotifications] = useState([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const [recentNotifications, setRecentNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationError, setNotificationError] = useState("");
+
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const bellRef = useRef(null);
   const settingsRef = useRef(null);
+  const seenNotificationIds = useRef(new Set());
 
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("taskflow-theme") === "dark",
   );
 
-  // Apply and save the selected theme.
+  // Apply the theme and remember the user's preference.
   useEffect(() => {
     document.documentElement.setAttribute(
       "data-theme",
@@ -76,25 +82,48 @@ export default function AppLayout({ children, title = "Overview" }) {
     localStorage.setItem("taskflow-theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
-  // Load unread notifications and listen for new ones.
+  // Fetch the unread notification count.
   useEffect(() => {
     if (!user?._id) return;
+
+    let cancelled = false;
 
     const loadUnreadCount = async () => {
       try {
         const response = await api.get("/notifications");
         const items = response.data.notifications || [];
 
-        setUnreadCount(items.filter((item) => !item.isRead).length);
+        if (!cancelled) {
+          setUnreadCount(items.filter((item) => !item.isRead).length);
+        }
       } catch (error) {
-        console.error("Failed to load unread notification count", error);
+        if (!cancelled) {
+          console.error("Failed to load unread notification count", error);
+        }
       }
     };
 
     const handleNewNotification = (notification) => {
-      if (notification?._id && !notification.isRead) {
-        setUnreadCount((count) => count + 1);
+      if (
+        !notification?._id ||
+        notification.isRead ||
+        seenNotificationIds.current.has(notification._id)
+      ) {
+        return;
       }
+
+      seenNotificationIds.current.add(notification._id);
+
+      setUnreadCount((count) => count + 1);
+
+      // Update the open popup immediately for new notifications.
+      setRecentNotifications((items) => {
+        if (items.some((item) => item._id === notification._id)) {
+          return items;
+        }
+
+        return [notification, ...items].slice(0, 5);
+      });
     };
 
     loadUnreadCount();
@@ -102,31 +131,56 @@ export default function AppLayout({ children, title = "Overview" }) {
     window.addEventListener("notifications-read", loadUnreadCount);
 
     return () => {
+      cancelled = true;
       socket.off("notification:new", handleNewNotification);
       window.removeEventListener("notifications-read", loadUnreadCount);
     };
   }, [user?._id]);
 
-  // Load recent notifications when the bell opens.
+  // Load notifications when the bell opens.
   useEffect(() => {
-    if (!bellOpen) return;
+    if (!bellOpen || !user?._id) return;
+
+    let cancelled = false;
 
     const loadRecentNotifications = async () => {
+      setNotificationsLoading(true);
+      setNotificationError("");
+
       try {
         const response = await api.get("/notifications");
         const items = response.data.notifications || [];
 
+        if (cancelled) return;
+
         setRecentNotifications(items.slice(0, 5));
         setUnreadCount(items.filter((item) => !item.isRead).length);
+
+        items.forEach((item) => {
+          seenNotificationIds.current.add(item._id);
+        });
       } catch (error) {
-        console.error("Failed to load notifications", error);
+        if (!cancelled) {
+          setNotificationError(
+            error.response?.data?.message ||
+              "Unable to load notifications. Please try again.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setNotificationsLoading(false);
+        }
       }
     };
 
     loadRecentNotifications();
-  }, [bellOpen]);
 
-  // Close popups when clicking outside or pressing Escape.
+    return () => {
+      cancelled = true;
+    };
+  }, [bellOpen, user?._id]);
+
+  // Close both dropdowns on outside click or Escape.
   useEffect(() => {
     if (!bellOpen && !settingsOpen) return;
 
@@ -157,16 +211,29 @@ export default function AppLayout({ children, title = "Overview" }) {
   }, [bellOpen, settingsOpen]);
 
   const handleLogout = async () => {
+    const confirmed = window.confirm("Are you sure you want to sign out?");
+
+    if (!confirmed) return;
+
+    setLoggingOut(true);
+
     try {
       await logout();
       navigate("/login", { replace: true });
     } catch {
-      alert("Logout failed. Please try again.");
+      window.alert("Logout failed. Please try again.");
+      setLoggingOut(false);
     }
+  };
+
+  const handleOpenNotifications = () => {
+    setBellOpen(false);
+    navigate("/notifications");
   };
 
   const initials = (user?.name || "User")
     .split(" ")
+    .filter(Boolean)
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
@@ -182,7 +249,7 @@ export default function AppLayout({ children, title = "Overview" }) {
           </div>
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" aria-label="Main navigation">
           {navigation
             .filter((item) => item.roles.includes(user?.role))
             .map((item) => (
@@ -194,7 +261,9 @@ export default function AppLayout({ children, title = "Overview" }) {
                   `sidebar-link${isActive ? " active" : ""}`
                 }
               >
-                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-icon" aria-hidden="true">
+                  {item.icon}
+                </span>
                 <span>{item.label}</span>
 
                 {item.path === "/notifications" && unreadCount > 0 && (
@@ -218,20 +287,27 @@ export default function AppLayout({ children, title = "Overview" }) {
           </div>
 
           <div className="topbar-user">
-            <div className="user-avatar">{initials}</div>
+            {/* <div className="user-avatar" aria-hidden="true">
+              {initials}
+            </div> */}
 
-            <div className="user-details">
+            {/* <div className="user-details">
               <strong>{user?.name}</strong>
               <span>{user?.role}</span>
-            </div>
+            </div> */}
 
-            {/* Notification bell and popup */}
+            {/* Notifications */}
             <div className="notification-bell-wrapper" ref={bellRef}>
               <button
                 type="button"
                 className="notification-bell"
-                aria-label="Notifications"
+                aria-label={
+                  unreadCount > 0
+                    ? `Notifications, ${unreadCount} unread`
+                    : "Notifications"
+                }
                 aria-expanded={bellOpen}
+                aria-haspopup="true"
                 onClick={() => {
                   setBellOpen((open) => !open);
                   setSettingsOpen(false);
@@ -260,9 +336,14 @@ export default function AppLayout({ children, title = "Overview" }) {
               </button>
 
               {bellOpen && (
-                <div className="notification-popup">
+                <div
+                  className="notification-popup"
+                  role="region"
+                  aria-label="Recent notifications"
+                >
                   <div className="notification-popup-header">
                     <strong>Notifications</strong>
+
                     <button
                       type="button"
                       onClick={() => setBellOpen(false)}
@@ -272,7 +353,24 @@ export default function AppLayout({ children, title = "Overview" }) {
                     </button>
                   </div>
 
-                  {recentNotifications.length === 0 ? (
+                  {notificationsLoading ? (
+                    <p className="notification-popup-empty" role="status">
+                      Loading notifications...
+                    </p>
+                  ) : notificationError ? (
+                    <div className="notification-popup-error">
+                      <p role="alert">{notificationError}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBellOpen(false);
+                          requestAnimationFrame(() => setBellOpen(true));
+                        }}
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  ) : recentNotifications.length === 0 ? (
                     <p className="notification-popup-empty">
                       You're all caught up!
                     </p>
@@ -285,13 +383,18 @@ export default function AppLayout({ children, title = "Overview" }) {
                             item.isRead ? "" : "unread"
                           }`}
                         >
-                          <span className="notification-popup-dot" />
+                          <span
+                            className="notification-popup-dot"
+                            aria-hidden="true"
+                          />
 
                           <div>
                             <strong>{item.type || "Update"}</strong>
                             <p>{item.message}</p>
                             <small>
-                              {new Date(item.createdAt).toLocaleString()}
+                              {item.createdAt
+                                ? new Date(item.createdAt).toLocaleString()
+                                : "Date unavailable"}
                             </small>
                           </div>
                         </div>
@@ -302,18 +405,15 @@ export default function AppLayout({ children, title = "Overview" }) {
                   <button
                     type="button"
                     className="notification-popup-footer"
-                    onClick={() => {
-                      setBellOpen(false);
-                      navigate("/notifications");
-                    }}
+                    onClick={handleOpenNotifications}
                   >
-                    View all notifications
+                    View all notifications →
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Settings dropdown */}
+            {/* Settings */}
             <div className="settings-wrapper" ref={settingsRef}>
               <button
                 type="button"
@@ -324,17 +424,26 @@ export default function AppLayout({ children, title = "Overview" }) {
                 }}
                 aria-label="Open settings"
                 aria-expanded={settingsOpen}
+                aria-haspopup="true"
                 title="Settings"
               >
-                <span className="nav-icon">⚙</span>
+                <span className="nav-icon" aria-hidden="true">
+                  ⚙
+                </span>
               </button>
 
               {settingsOpen && (
-                <div className="settings-dropdown">
+                <div
+                  className="settings-dropdown"
+                  role="region"
+                  aria-label="Account settings"
+                >
                   <div className="settings-profile">
-                    <div className="user-avatar">{initials}</div>
+                    <div className="user-avatar" aria-hidden="true">
+                      {initials}
+                    </div>
 
-                    <div>
+                    <div className="settings-profile-details">
                       <strong>{user?.name}</strong>
                       <p>{user?.email}</p>
                       <small>{user?.role}</small>
@@ -350,7 +459,9 @@ export default function AppLayout({ children, title = "Overview" }) {
                       type="button"
                       className={`theme-toggle ${darkMode ? "active" : ""}`}
                       onClick={() => setDarkMode((current) => !current)}
-                      aria-label="Toggle theme"
+                      aria-label={`Switch to ${
+                        darkMode ? "light" : "dark"
+                      } mode`}
                       aria-pressed={darkMode}
                     >
                       <span />
@@ -363,8 +474,10 @@ export default function AppLayout({ children, title = "Overview" }) {
                     type="button"
                     className="settings-logout"
                     onClick={handleLogout}
+                    disabled={loggingOut}
                   >
-                    <span>↪</span> Sign out
+                    <span aria-hidden="true">↪</span>
+                    {loggingOut ? "Signing out..." : "Sign out"}
                   </button>
                 </div>
               )}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppLayout from "../components/AppLayout";
 import api from "../services/api";
 import "./NotificationsPage.css";
@@ -9,32 +9,67 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [markingRead, setMarkingRead] = useState([]);
 
-  const loadNotifications = async () => {
-    const response = await api.get("/notifications");
-    setNotifications(response.data.notifications || []);
-  };
+  const loadNotifications = useCallback(async () => {
+    try {
+      setError("");
 
-  useEffect(() => {
-    loadNotifications()
-      .catch((err) =>
-        setError(
-          err.response?.data?.message || "Unable to load notifications.",
-        ),
-      )
-      .finally(() => setLoading(false));
+      const response = await api.get("/notifications");
+      const items = response.data.notifications || [];
+
+      setNotifications(items);
+      return items;
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Unable to load notifications. Please try again.",
+      );
+      throw err;
+    }
   }, []);
 
+  // Load notifications on mount.
+  useEffect(() => {
+    let cancelled = false;
+
+    const initialLoad = async () => {
+      try {
+        const response = await api.get("/notifications");
+
+        if (!cancelled) {
+          setNotifications(response.data.notifications || []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err.response?.data?.message ||
+              "Unable to load notifications. Please try again.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initialLoad();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Receive new notifications without adding duplicates.
   useEffect(() => {
     const handleNewNotification = (notification) => {
       if (!notification?._id) return;
 
       setNotifications((current) => {
-        const alreadyExists = current.some(
-          (item) => item._id === notification._id,
-        );
-
-        if (alreadyExists) return current;
+        if (current.some((item) => item._id === notification._id)) {
+          return current;
+        }
 
         return [notification, ...current];
       });
@@ -47,15 +82,35 @@ export default function NotificationsPage() {
     };
   }, []);
 
+  // Mark a notification as read.
   const markRead = async (id) => {
+    if (markingRead.includes(id)) return;
+
     setError("");
+    setMarkingRead((current) => [...current, id]);
 
     try {
       await api.patch(`/notifications/${id}/read`);
+
+      // Update the UI immediately.
+      setNotifications((current) =>
+        current.map((item) =>
+          item._id === id ? { ...item, isRead: true } : item,
+        ),
+      );
+
+      // Notify the layout so its unread count can refresh.
       window.dispatchEvent(new Event("notifications-read"));
+
+      // Reconcile with the server's latest data.
       await loadNotifications();
     } catch (err) {
-      setError(err.response?.data?.message || "Could not mark as read.");
+      setError(
+        err.response?.data?.message ||
+          "Could not mark notification as read. Please try again.",
+      );
+    } finally {
+      setMarkingRead((current) => current.filter((itemId) => itemId !== id));
     }
   };
 
@@ -82,9 +137,8 @@ export default function NotificationsPage() {
     <AppLayout title="Notifications">
       <section className="notifications-intro">
         <div>
-          {/* <span className="notifications-eyebrow">YOUR UPDATES</span> */}
-          {/* <h1>Notifications</h1> */}
-          {/* <p>Stay informed about assignments, deadlines, and task progress.</p> */}
+          <h1>Notifications</h1>
+          <p>Keep track of your workspace updates.</p>
         </div>
 
         <div className="notification-summary-card">
@@ -93,19 +147,28 @@ export default function NotificationsPage() {
         </div>
       </section>
 
-      {error && <div className="notification-error">{error}</div>}
+      {error && (
+        <div className="notification-error" role="alert">
+          <span>{error}</span>
+          <button type="button" onClick={loadNotifications}>
+            Retry
+          </button>
+        </div>
+      )}
 
       <section className="notifications-panel">
         <div className="notifications-toolbar">
           <div>
             <h2>Your Notifications</h2>
-            {/* <p>Updates from your workspace.</p> */}
+            <p>
+              {notifications.length} total · {unreadCount} unread
+            </p>
           </div>
 
           <select
             aria-label="Filter notifications"
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(event) => setFilter(event.target.value)}
           >
             <option>All</option>
             <option>Unread</option>
@@ -114,22 +177,33 @@ export default function NotificationsPage() {
         </div>
 
         {loading ? (
-          <div className="notifications-empty">Loading notifications...</div>
+          <div className="notifications-empty" role="status">
+            Loading notifications...
+          </div>
         ) : filteredNotifications.length === 0 ? (
           <div className="notifications-empty">
             <div className="notifications-empty-icon">✓</div>
-            <h3>You're all caught up</h3>
-            <p>Notifications for this filter will appear here.</p>
+            <h3>
+              {filter === "All"
+                ? "You're all caught up"
+                : `No ${filter.toLowerCase()} notifications`}
+            </h3>
+            <p>Notifications matching this filter will appear here.</p>
           </div>
         ) : (
           <div className="notification-list">
             {filteredNotifications.map((item) => (
               <article
-                className={`notification-item ${item.isRead ? "read" : "unread"}`}
+                className={`notification-item ${
+                  item.isRead ? "read" : "unread"
+                }`}
                 key={item._id}
               >
                 <div
-                  className={`notification-type-icon ${(item.type || "").toLowerCase()}`}
+                  className={`notification-type-icon ${(
+                    item.type || ""
+                  ).toLowerCase()}`}
+                  aria-hidden="true"
                 >
                   {iconFor(item.type)}
                 </div>
@@ -137,22 +211,30 @@ export default function NotificationsPage() {
                 <div className="notification-item-content">
                   <div className="notification-item-heading">
                     <strong>{item.type || "Update"}</strong>
-                    {!item.isRead && <span className="unread-dot" />}
+                    {!item.isRead && (
+                      <span className="unread-dot" aria-label="Unread" />
+                    )}
                   </div>
 
                   <p>{item.message}</p>
 
                   <time dateTime={item.createdAt}>
-                    {new Date(item.createdAt).toLocaleString()}
+                    {item.createdAt
+                      ? new Date(item.createdAt).toLocaleString()
+                      : "Date unavailable"}
                   </time>
                 </div>
 
                 {!item.isRead && (
                   <button
+                    type="button"
                     className="notification-read-button"
+                    disabled={markingRead.includes(item._id)}
                     onClick={() => markRead(item._id)}
                   >
-                    Mark read
+                    {markingRead.includes(item._id)
+                      ? "Marking..."
+                      : "Mark read"}
                   </button>
                 )}
               </article>
