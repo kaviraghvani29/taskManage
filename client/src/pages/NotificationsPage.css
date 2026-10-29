@@ -273,3 +273,74 @@
   line-height: 1;
   box-shadow: 0 0 0 2px #22263b;
 }
+
+/* Notifications page — dark theme */
+
+:root[data-theme="dark"] .notification-summary-card,
+:root[data-theme="dark"] .notifications-panel {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.12);
+}
+
+:root[data-theme="dark"] .notification-summary-card {
+  background: linear-gradient(135deg, #1f2937, #292747);
+}
+
+:root[data-theme="dark"] .notifications-intro h1,
+:root[data-theme="dark"] .notifications-toolbar h2,
+:root[data-theme="dark"] .notification-item-heading strong,
+:root[data-theme="dark"] .notifications-empty h3 {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .notifications-intro p,
+:root[data-theme="dark"] .notification-summary-card span,
+:root[data-theme="dark"] .notifications-toolbar p,
+:root[data-theme="dark"] .notification-item-content p,
+:root[data-theme="dark"] .notification-item-content time,
+:root[data-theme="dark"] .notifications-empty p {
+  color: #aeb8c9;
+}
+
+:root[data-theme="dark"] .notifications-toolbar,
+:root[data-theme="dark"] .notification-item {
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .notifications-toolbar select {
+  background: #111827;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .notification-item,
+:root[data-theme="dark"] .notification-item.unread {
+  background: #1f2937;
+}
+
+:root[data-theme="dark"] .notification-item:hover {
+  background: #293548;
+}
+
+:root[data-theme="dark"] .notification-read-button {
+  background: #302b52;
+  border-color: #494078;
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .notification-read-button:hover {
+  background: #40386b;
+}
+
+:root[data-theme="dark"] .notifications-empty-icon {
+  background: #302b52;
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .notification-error {
+  background: #3b2028;
+  border-color: #743341;
+  color: #fecdd3;
+}

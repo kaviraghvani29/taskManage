@@ -519,3 +519,106 @@
 .stat-card-header .stat-label {
   margin: 0;
 }
+
+/* Dashboard dark theme */
+:root[data-theme="dark"] .welcome-section h1,
+:root[data-theme="dark"] .dashboard-panel h2,
+:root[data-theme="dark"] .stat-value,
+:root[data-theme="dark"] .workload-number,
+:root[data-theme="dark"] .dashboard-task-row strong,
+:root[data-theme="dark"] .status-summary-row strong {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .stat-card,
+:root[data-theme="dark"] .dashboard-panel {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .stat-label,
+:root[data-theme="dark"] .dashboard-task-row span,
+:root[data-theme="dark"] .status-summary-row span,
+:root[data-theme="dark"] .notification-description,
+:root[data-theme="dark"] .empty-state {
+  color: #b8c1d1;
+}
+
+:root[data-theme="dark"] .dashboard-task-row,
+:root[data-theme="dark"] .status-summary-row {
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .dashboard-alert {
+  background: #3b2925;
+  border-color: #754033;
+  color: #ffb9a5;
+}
+
+:root[data-theme="dark"] .dashboard-alert p {
+  color: #e5b7a9;
+}
+
+:root[data-theme="dark"] .dashboard-footer-note {
+  color: #b8c1d1;
+}
+
+:root[data-theme="dark"] .welcome-date {
+  color: #b8c1d1;
+}
+
+:root[data-theme="dark"] .workload-track {
+  background: #374151;
+}
+
+/* Notification popup — Dark Mode */
+:root[data-theme="dark"] .notification-dropdown,
+:root[data-theme="dark"] .notification-popup {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .notification-dropdown h2,
+:root[data-theme="dark"] .notification-popup h2 {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .notification-item,
+:root[data-theme="dark"] .notification-dropdown-item {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .notification-item:hover,
+:root[data-theme="dark"] .notification-dropdown-item:hover {
+  background: #293548;
+}
+
+:root[data-theme="dark"] .notification-item p,
+:root[data-theme="dark"] .notification-dropdown-item p {
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .notification-item strong,
+:root[data-theme="dark"] .notification-dropdown-item strong {
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .notification-item time,
+:root[data-theme="dark"] .notification-dropdown-item time {
+  color: #9ca3af;
+}
+
+:root[data-theme="dark"] .notification-popup button,
+:root[data-theme="dark"] .notification-dropdown button {
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .notification-popup a,
+:root[data-theme="dark"] .notification-dropdown a {
+  background: #1f2937;
+  color: #8b80ff;
+  border-color: #374151;
+}

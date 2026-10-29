@@ -451,3 +451,108 @@
     padding: 18px;
   }
 }
+
+/* Projects page — dark theme */
+:root[data-theme="dark"] .projects-panel,
+:root[data-theme="dark"] .project-card {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-color: #374151;
+  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.12);
+}
+
+:root[data-theme="dark"] .projects-intro h1,
+:root[data-theme="dark"] .projects-panel-heading h2,
+:root[data-theme="dark"] .projects-list-heading h2,
+:root[data-theme="dark"] .project-card h3,
+:root[data-theme="dark"] .projects-empty h3 {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .projects-intro p,
+:root[data-theme="dark"] .projects-list-heading p,
+:root[data-theme="dark"] .projects-panel-heading p,
+:root[data-theme="dark"] .project-description,
+:root[data-theme="dark"] .project-team,
+:root[data-theme="dark"] .project-owner,
+:root[data-theme="dark"] .project-muted,
+:root[data-theme="dark"] .projects-empty {
+  color: #aeb8c9;
+}
+
+:root[data-theme="dark"] .projects-panel-heading,
+:root[data-theme="dark"] .project-divider {
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .project-divider {
+  background: #374151;
+}
+
+:root[data-theme="dark"] .projects-field > label {
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .projects-field > input,
+:root[data-theme="dark"] .projects-field > textarea {
+  background: #111827;
+  color: #f3f4f6;
+  border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .projects-field > input::placeholder,
+:root[data-theme="dark"] .projects-field > textarea::placeholder {
+  color: #9ca3af;
+}
+
+:root[data-theme="dark"] .projects-field > input:focus,
+:root[data-theme="dark"] .projects-field > textarea:focus {
+  background: #111827;
+  border-color: #786af1;
+}
+
+:root[data-theme="dark"] .projects-secondary-button {
+  background: #293548;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+:root[data-theme="dark"] .project-member-option {
+  background: #182232;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .project-member-option:has(input:checked) {
+  background: #302b52;
+  border-color: #786af1;
+}
+
+:root[data-theme="dark"] .project-member-details strong {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .project-member-details small {
+  color: #aeb8c9;
+}
+
+:root[data-theme="dark"] .project-avatar {
+  border-color: #1f2937;
+}
+
+:root[data-theme="dark"] .projects-count {
+  background: #302b52;
+  border-color: #494078;
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .projects-feedback.error {
+  background: #3b2028;
+  border-color: #743341;
+  color: #fecdd3;
+}
+
+:root[data-theme="dark"] .projects-feedback.success {
+  background: #17352b;
+  border-color: #285b47;
+  color: #bbf7d0;
+}

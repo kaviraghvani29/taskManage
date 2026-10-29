@@ -580,3 +580,126 @@
   color: var(--text-color);
   border-color: var(--border-color);
 }
+
+/* Notification popup — Dark Mode */
+
+:root[data-theme="dark"] .notification-popup {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .notification-popup-header {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .notification-popup-header strong {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .notification-popup-header button {
+  color: #9ca3af;
+}
+
+:root[data-theme="dark"] .notification-popup-header button:hover {
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .notification-popup-list {
+  background: #1f2937;
+}
+
+:root[data-theme="dark"] .notification-popup-item {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .notification-popup-item.unread {
+  background: #252b43;
+}
+
+:root[data-theme="dark"] .notification-popup-item strong {
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .notification-popup-item p {
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .notification-popup-item small {
+  color: #9ca3af;
+}
+
+:root[data-theme="dark"] .notification-popup-dot {
+  background: #786af1;
+}
+
+:root[data-theme="dark"] .notification-popup-empty {
+  background: #1f2937;
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .notification-popup-footer {
+  background: #1f2937;
+  color: #a89cff;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .notification-popup-footer:hover {
+  background: #293548;
+  color: #c4baff;
+}
+
+/* Settings dropdown — Dark Mode */
+
+:root[data-theme="dark"] .settings-dropdown {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .settings-profile {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .settings-profile strong {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .settings-profile p {
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .settings-profile small {
+  color: #a89cff;
+}
+
+:root[data-theme="dark"] .settings-divider {
+  background: #374151;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .settings-theme-row {
+  color: #e5e7eb;
+}
+
+:root[data-theme="dark"] .settings-logout {
+  color: #fca5a5;
+  background: transparent;
+}
+
+:root[data-theme="dark"] .settings-logout:hover {
+  background: #3b2028;
+  color: #fecdd3;
+}
+
+:root[data-theme="dark"] .settings-button {
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .settings-button:hover {
+  background: #302b52;
+}

@@ -269,3 +269,72 @@
     transform: rotate(90deg);
   }
 }
+
+/* Activity History — dark theme */
+
+:root[data-theme="dark"] .activity-total,
+:root[data-theme="dark"] .activity-panel {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.12);
+}
+
+:root[data-theme="dark"] .activity-total {
+  background: linear-gradient(135deg, #1f2937, #292747);
+}
+
+:root[data-theme="dark"] .activity-intro h1,
+:root[data-theme="dark"] .activity-toolbar h2,
+:root[data-theme="dark"] .activity-entry-top strong,
+:root[data-theme="dark"] .activity-description strong,
+:root[data-theme="dark"] .activity-empty h3 {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .activity-intro p,
+:root[data-theme="dark"] .activity-total span,
+:root[data-theme="dark"] .activity-toolbar p,
+:root[data-theme="dark"] .activity-entry-top time,
+:root[data-theme="dark"] .activity-description,
+:root[data-theme="dark"] .activity-empty {
+  color: #aeb8c9;
+}
+
+:root[data-theme="dark"] .activity-toolbar {
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .activity-toolbar select {
+  background: #111827;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .activity-entry {
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .activity-change > div:not(.activity-change-arrow) {
+  background: #182232;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .activity-change span {
+  color: #a1a9ba;
+}
+
+:root[data-theme="dark"] .activity-change p {
+  color: #e5e7eb;
+}
+
+:root[data-theme="dark"] .activity-empty-icon {
+  background: #302b52;
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .activity-error {
+  background: #3b2028;
+  border-color: #743341;
+  color: #fecdd3;
+}

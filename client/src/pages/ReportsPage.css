@@ -391,3 +391,82 @@
     padding: 18px;
   }
 }
+
+/* Reports page — dark theme */
+
+:root[data-theme="dark"] .reports-summary-card,
+:root[data-theme="dark"] .reports-panel {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-color: #374151;
+  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.12);
+}
+
+:root[data-theme="dark"] .reports-intro h1,
+:root[data-theme="dark"] .reports-panel-heading h2,
+:root[data-theme="dark"] .reports-summary-card strong,
+:root[data-theme="dark"] .reports-status-label strong,
+:root[data-theme="dark"] .reports-employee strong,
+:root[data-theme="dark"] .reports-table td:first-child strong {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .reports-intro p,
+:root[data-theme="dark"] .reports-summary-card span,
+:root[data-theme="dark"] .reports-summary-card small,
+:root[data-theme="dark"] .reports-panel-heading p,
+:root[data-theme="dark"] .reports-status-label,
+:root[data-theme="dark"] .reports-employee > div span,
+:root[data-theme="dark"] .reports-footnote,
+:root[data-theme="dark"] .reports-empty {
+  color: #aeb8c9;
+}
+
+:root[data-theme="dark"] .reports-refresh {
+  background: #293548;
+  border-color: #494078;
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .reports-refresh:hover {
+  background: #302b52;
+}
+
+:root[data-theme="dark"] .reports-panel-heading {
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .reports-bar-track {
+  background: #374151;
+}
+
+:root[data-theme="dark"] .reports-table th {
+  background: #293548;
+  border-color: #374151;
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .reports-table td {
+  background: #1f2937;
+  border-color: #374151;
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .reports-table tbody tr:hover td {
+  background: #293548;
+}
+
+:root[data-theme="dark"] .reports-table td:first-child small {
+  color: #aeb8c9;
+}
+
+:root[data-theme="dark"] .reports-table-count {
+  background: #302b52;
+  color: #c4baff;
+}
+
+:root[data-theme="dark"] .reports-error {
+  background: #3b2028;
+  border-color: #743341;
+  color: #fecdd3;
+}

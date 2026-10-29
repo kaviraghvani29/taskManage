@@ -24,7 +24,12 @@ const navigation = [
     icon: "◫",
     roles: ["Admin", "Manager", "Employee"],
   },
-  { label: "Team", path: "/team", icon: "♧", roles: ["Admin", "Manager"] },
+  {
+    label: "Team",
+    path: "/team",
+    icon: "♧",
+    roles: ["Admin", "Manager"],
+  },
   {
     label: "Notifications",
     path: "/notifications",
@@ -47,25 +52,40 @@ const navigation = [
 
 export default function AppLayout({ children, title = "Overview" }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [bellOpen, setBellOpen] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState([]);
-  const bellRef = useRef(null);
-
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const settingsRef = useRef(null);
-
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const bellRef = useRef(null);
+  const settingsRef = useRef(null);
+
+  const [darkMode, setDarkMode] = useState(
+    () => localStorage.getItem("taskflow-theme") === "dark",
+  );
+
+  // Apply and save the selected theme.
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-theme",
+      darkMode ? "dark" : "light",
+    );
+
+    localStorage.setItem("taskflow-theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
+
+  // Load unread notifications and listen for new ones.
   useEffect(() => {
     if (!user?._id) return;
 
     const loadUnreadCount = async () => {
       try {
         const response = await api.get("/notifications");
-        const notifications = response.data.notifications || [];
+        const items = response.data.notifications || [];
 
-        setUnreadCount(notifications.filter((item) => !item.isRead).length);
+        setUnreadCount(items.filter((item) => !item.isRead).length);
       } catch (error) {
         console.error("Failed to load unread notification count", error);
       }
@@ -79,7 +99,6 @@ export default function AppLayout({ children, title = "Overview" }) {
 
     loadUnreadCount();
     socket.on("notification:new", handleNewNotification);
-
     window.addEventListener("notifications-read", loadUnreadCount);
 
     return () => {
@@ -88,6 +107,7 @@ export default function AppLayout({ children, title = "Overview" }) {
     };
   }, [user?._id]);
 
+  // Load recent notifications when the bell opens.
   useEffect(() => {
     if (!bellOpen) return;
 
@@ -106,17 +126,25 @@ export default function AppLayout({ children, title = "Overview" }) {
     loadRecentNotifications();
   }, [bellOpen]);
 
+  // Close popups when clicking outside or pressing Escape.
   useEffect(() => {
-    if (!bellOpen) return;
+    if (!bellOpen && !settingsOpen) return;
 
     const handleOutsideClick = (event) => {
-      if (!bellRef.current?.contains(event.target)) {
+      if (bellOpen && !bellRef.current?.contains(event.target)) {
         setBellOpen(false);
+      }
+
+      if (settingsOpen && !settingsRef.current?.contains(event.target)) {
+        setSettingsOpen(false);
       }
     };
 
     const handleEscape = (event) => {
-      if (event.key === "Escape") setBellOpen(false);
+      if (event.key === "Escape") {
+        setBellOpen(false);
+        setSettingsOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
@@ -126,21 +154,7 @@ export default function AppLayout({ children, title = "Overview" }) {
       document.removeEventListener("mousedown", handleOutsideClick);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [bellOpen]);
-
-  const navigate = useNavigate();
-
-  const [darkMode, setDarkMode] = useState(
-    () => localStorage.getItem("taskflow-theme") === "dark",
-  );
-
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-theme",
-      darkMode ? "dark" : "light",
-    );
-    localStorage.setItem("taskflow-theme", darkMode ? "dark" : "light");
-  }, [darkMode]);
+  }, [bellOpen, settingsOpen]);
 
   const handleLogout = async () => {
     try {
@@ -165,7 +179,6 @@ export default function AppLayout({ children, title = "Overview" }) {
           <div className="brand-mark">T</div>
           <div>
             <div className="brand-name">TaskFlow</div>
-            {/* <div className="brand-caption">WORKSPACE</div> */}
           </div>
         </div>
 
@@ -201,23 +214,28 @@ export default function AppLayout({ children, title = "Overview" }) {
       <div className="app-main">
         <header className="app-topbar">
           <div>
-            {/* <div className="topbar-breadcrumb">Workspace / {title}</div> */}
             <div className="topbar-title">{title}</div>
           </div>
 
           <div className="topbar-user">
             <div className="user-avatar">{initials}</div>
+
             <div className="user-details">
               <strong>{user?.name}</strong>
               <span>{user?.role}</span>
             </div>
+
+            {/* Notification bell and popup */}
             <div className="notification-bell-wrapper" ref={bellRef}>
               <button
                 type="button"
                 className="notification-bell"
                 aria-label="Notifications"
                 aria-expanded={bellOpen}
-                onClick={() => setBellOpen((open) => !open)}
+                onClick={() => {
+                  setBellOpen((open) => !open);
+                  setSettingsOpen(false);
+                }}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -268,6 +286,7 @@ export default function AppLayout({ children, title = "Overview" }) {
                           }`}
                         >
                           <span className="notification-popup-dot" />
+
                           <div>
                             <strong>{item.type || "Update"}</strong>
                             <p>{item.message}</p>
@@ -294,12 +313,17 @@ export default function AppLayout({ children, title = "Overview" }) {
               )}
             </div>
 
+            {/* Settings dropdown */}
             <div className="settings-wrapper" ref={settingsRef}>
               <button
                 type="button"
                 className="settings-button"
-                onClick={() => setSettingsOpen((open) => !open)}
+                onClick={() => {
+                  setSettingsOpen((open) => !open);
+                  setBellOpen(false);
+                }}
                 aria-label="Open settings"
+                aria-expanded={settingsOpen}
                 title="Settings"
               >
                 <span className="nav-icon">⚙</span>
@@ -309,6 +333,7 @@ export default function AppLayout({ children, title = "Overview" }) {
                 <div className="settings-dropdown">
                   <div className="settings-profile">
                     <div className="user-avatar">{initials}</div>
+
                     <div>
                       <strong>{user?.name}</strong>
                       <p>{user?.email}</p>

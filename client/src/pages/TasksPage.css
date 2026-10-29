@@ -852,3 +852,163 @@ td {
 .kanban-column {
   transition: background-color 0.2s ease;
 }
+
+/* Tasks page — complete dark theme */
+
+:root[data-theme="dark"] .task-metric-card,
+:root[data-theme="dark"] .tasks-panel {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-color: #374151;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.12);
+}
+
+/* Summary cards */
+:root[data-theme="dark"] .task-metric-card span {
+  color: #aab4c5;
+}
+
+:root[data-theme="dark"] .task-metric-card strong {
+  color: #f3f4f6;
+}
+
+/* Main panel heading */
+:root[data-theme="dark"] .tasks-panel-heading {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .tasks-panel-heading h2,
+:root[data-theme="dark"] .tasks-panel-heading p {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .task-result-count {
+  background: #302b52;
+  border-color: #494078;
+  color: #c4baff;
+}
+
+/* Search and filters */
+:root[data-theme="dark"] .task-filter-form {
+  background: #182232;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .task-filter-form > input,
+:root[data-theme="dark"] .task-filter-form > select,
+:root[data-theme="dark"] .task-form-field input,
+:root[data-theme="dark"] .task-form-field select,
+:root[data-theme="dark"] .task-form-field textarea,
+:root[data-theme="dark"] .team-manage-cell select {
+  background: #111827;
+  color: #f3f4f6;
+  border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .task-filter-form input::placeholder,
+:root[data-theme="dark"] .task-form-field input::placeholder,
+:root[data-theme="dark"] .task-form-field textarea::placeholder {
+  color: #9ca3af;
+}
+
+:root[data-theme="dark"] .overdue-filter,
+:root[data-theme="dark"] .task-form-field label,
+:root[data-theme="dark"] .task-form-field small {
+  color: #cbd5e1;
+}
+
+/* Table */
+:root[data-theme="dark"] .tasks-table thead th {
+  background: #293548;
+  color: #cbd5e1;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .tasks-table tbody td {
+  background: #1f2937;
+  color: #d1d5db;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .tasks-table tbody tr:hover td {
+  background: #293548;
+}
+
+:root[data-theme="dark"] .task-table-title {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .task-table-subtitle {
+  color: #a1a9ba;
+}
+
+/* View toggle */
+:root[data-theme="dark"] .task-view-toggle button {
+  background: #1f2937;
+  border-color: #374151;
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .task-view-toggle button.active {
+  background: #6857ed;
+  border-color: #6857ed;
+  color: #ffffff;
+}
+
+/* Secondary buttons and pagination */
+:root[data-theme="dark"] .task-action.secondary,
+:root[data-theme="dark"] .tasks-pagination > div > button {
+  background: #293548;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .tasks-pagination,
+:root[data-theme="dark"] .tasks-pagination > span,
+:root[data-theme="dark"] .tasks-empty p,
+:root[data-theme="dark"] .tasks-empty h3 {
+  color: #d1d5db;
+}
+
+/* Kanban board */
+:root[data-theme="dark"] .kanban-column {
+  background: #182232;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .kanban-column-header h3 {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .kanban-task-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .kanban-task-card h4 {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .kanban-project,
+:root[data-theme="dark"] .kanban-task-details,
+:root[data-theme="dark"] .kanban-empty {
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .kanban-task-card .task-row-actions {
+  border-color: #374151;
+}
+
+/* Feedback messages */
+:root[data-theme="dark"] .task-feedback.error {
+  background: #3b2028;
+  border-color: #743341;
+  color: #fecdd3;
+}
+
+:root[data-theme="dark"] .task-feedback.success {
+  background: #17352b;
+  border-color: #285b47;
+  color: #bbf7d0;
+}
